@@ -8,7 +8,7 @@
 Name:           tabpro-s-camera-kmods
 Version:        1.0
 Release:        %{?rel}%{!?rel:1}%{?dist}
-Summary:        Galaxy TabPro S camera kernel modules (unsigned) for recent Fedora kernels
+Summary:        Galaxy TabPro S camera and sensor kernel modules (unsigned) for recent Fedora kernels
 License:        GPL-2.0-only
 URL:            https://github.com/maxfridbe/galaxy-tabpro-s-linux
 ExclusiveArch:  x86_64
@@ -20,20 +20,22 @@ Requires:       tabpro-s-camera
 Out-of-tree kernel modules for the Samsung Galaxy TabPro S cameras, built for these kernels:
 %{kvers}
 Modules: intel_skl_int3472_tps68470 (with TabPro S board data), ipu-bridge (with INT347F),
-imx241, dw9806b. They are stored outside /lib/modules and loaded (signed locally if Secure Boot
+imx241, dw9806b; sensors: st_accel_i2c (LIS2HH12 SMO8A80), sx9310 (STH0001), bh1730 (light).
+They are stored outside /lib/modules and loaded (signed locally if Secure Boot
 requires it) by tabpro-s-camera.service.
 
 %prep
 %build
 for k in %{kvers}; do
-  rm -rf build-$k && cp -r %{repo}/camera/kernel build-$k
+  rm -rf build-$k build-sensors-$k && cp -r %{repo}/camera/kernel build-$k && cp -r %{repo}/sensors/kernel build-sensors-$k
   make -C build-$k KVER=$k KDIR=/usr/src/kernels/$k
+  make -C build-sensors-$k KVER=$k KDIR=/usr/src/kernels/$k
 done
 
 %install
 for k in %{kvers}; do
   install -d %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k
-  install -m 0644 build-$k/*/*.ko %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k/
+  install -m 0644 build-$k/*/*.ko build-sensors-$k/*/*.ko %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k/
 done
 
 %files

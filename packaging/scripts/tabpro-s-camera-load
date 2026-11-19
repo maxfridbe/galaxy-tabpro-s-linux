@@ -78,6 +78,13 @@ fi
 loaded dw9806b || load dw9806b dw9806b
 loaded imx241 || load imx241 imx241
 modprobe -q ipu3_cio2
+# sensors (no in-tree driver matches their ACPI ids, so the stock modules never autoload)
+for m in st_accel_i2c sx9310 bh1730; do
+  [ -f "$CACHE/$m.ko" ] || continue
+  if loaded $m && ! ours $m; then rmmod $m 2>/dev/null; fi
+  loaded $m || load $m $m
+done
 sleep 2
-log "$(ls /sys/bus/i2c/devices | grep -c '^i2c-INT347F:0[01]$') sensor(s) present, imx241 bound to $(ls /sys/bus/i2c/drivers/imx241 2>/dev/null | grep -c INT347F)"
+log "iio sensors: $(cat /sys/bus/iio/devices/iio:device*/name 2>/dev/null | tr '\n' ' ')"
+log "$(ls /sys/bus/i2c/devices | grep -c '^i2c-INT347F:0[01]$') camera sensor(s) present, imx241 bound to $(ls /sys/bus/i2c/drivers/imx241 2>/dev/null | grep -c INT347F)"
 exit 0

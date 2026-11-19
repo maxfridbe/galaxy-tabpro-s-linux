@@ -16,7 +16,8 @@ Recommends:     tabpro-s-camera-kmods
 %description
 Boot service that loads the Galaxy TabPro S camera drivers from tabpro-s-camera-kmods: the patched
 TPS68470 control-logic driver (board data), ipu-bridge with the IMX241 entry, the Sony IMX241 sensor
-driver and the DW9806B lens driver. If the running kernel enforces module signatures (Secure Boot),
+driver and the DW9806B lens driver, plus the accelerometer (LIS2HH12), proximity (SX9310) and
+ambient-light (BH1730) sensor drivers and the accelerometer mount matrix (auto-rotation). If the running kernel enforces module signatures (Secure Boot),
 the modules are signed locally with the machine owner's key from /etc/pki/tabpro-s (create it with
 tabpro-s-mok-setup); without Secure Boot they are loaded unsigned. A libcamera with IMX241 support
 is needed for applications (available from the same repository).
@@ -31,8 +32,10 @@ install -D -m 0755 %{repo}/packaging/scripts/tabpro-s-mok-setup %{buildroot}%{_b
 install -D -m 0644 %{repo}/packaging/systemd/tabpro-s-camera.service %{buildroot}%{_unitdir}/tabpro-s-camera.service
 install -d %{buildroot}%{_unitdir}/multi-user.target.wants
 ln -s ../tabpro-s-camera.service %{buildroot}%{_unitdir}/multi-user.target.wants/tabpro-s-camera.service
+install -D -m 0644 %{repo}/sensors/61-tabpro-s-accel.hwdb %{buildroot}%{_prefix}/lib/udev/hwdb.d/61-tabpro-s-accel.hwdb
 install -d %{buildroot}%{_tmpfilesdir}
 echo "d /var/lib/tabpro-s-camera 0755 root root -" > %{buildroot}%{_tmpfilesdir}/tabpro-s-camera.conf
+%{_prefix}/lib/udev/hwdb.d/61-tabpro-s-accel.hwdb
 
 %files
 %{_libexecdir}/tabpro-s/camera-load
@@ -41,3 +44,4 @@ echo "d /var/lib/tabpro-s-camera 0755 root root -" > %{buildroot}%{_tmpfilesdir}
 %{_unitdir}/tabpro-s-camera.service
 %{_unitdir}/multi-user.target.wants/tabpro-s-camera.service
 %{_tmpfilesdir}/tabpro-s-camera.conf
+%{_prefix}/lib/udev/hwdb.d/61-tabpro-s-accel.hwdb

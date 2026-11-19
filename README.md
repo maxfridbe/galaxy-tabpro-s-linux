@@ -29,10 +29,27 @@ real hardware.
 | Internal microphone (digital, on ALC298) | ✅ works | set input level ≤ 60 % (100 % clips) — see [docs/03](docs/03-microphone.md) |
 | **Rear camera** (Sony IMX241 5 MP + DW9806B focus) | ✅ **with [`camera/`](camera/)** | libcamera / PipeWire / GNOME Camera; no AF in apps yet |
 | **Front camera** (Sony IMX241 5 MP) | ✅ **with [`camera/`](camera/)** | |
-| Accelerometer, light, proximity sensors, GNSS | ❓ untested | |
+| Accelerometer (ST LIS2HH12, `SMO8A80`) | ✅ **with packages** | auto-rotation (mount matrix from ACPI `ROTM`) |
+| Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver; GNOME automatic brightness |
+| Proximity (Semtech SX9310, `STH0001`) | ✅ driver works | not used by GNOME |
+| GNSS (Broadcom BCM4752) | ❌ unsupported | closed Broadcom protocol |
 | Pen | ❓ untested | |
 
-## Quick start
+## Quick start (Fedora Silverblue / Fedora — RPM packages)
+
+```
+sudo curl -Lo /etc/yum.repos.d/tabpro-s.repo https://maxfridbe.github.io/galaxy-tabpro-s-linux/tabpro-s.repo
+rpm-ostree install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods
+rpm-ostree override replace --experimental --from repo=tabpro-s libcamera libcamera-ipa
+systemctl reboot
+# only if Secure Boot is enabled (one time, needs a keyboard at the next boot):
+sudo tabpro-s-mok-setup && systemctl reboot
+```
+(Fedora Workstation: `sudo dnf install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods libcamera`.)
+Packages are rebuilt daily for the newest Fedora kernels and signed (key `380F78FE…BD1C40C8`);
+`rpm-ostree upgrade` keeps everything current. Details: [docs/11-packages.md](docs/11-packages.md).
+
+## Manual install (from source)
 
 1. **Back up Windows hardware info first** (optional, recommended): [`windows-dump/`](windows-dump/) — a
    small Rust tool that saves the device tree, ACPI tables, registry and drivers to a USB stick.
