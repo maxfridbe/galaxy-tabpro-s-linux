@@ -99,3 +99,54 @@ Notes:
   file is needed and the profile can be computed from the 87 calibration bytes at boot.
 * A proper kernel solution: a panel-specific backlight in i915 (`intel_dp_aux_backlight.c` already
   has vendor-specific paths), registered as the `raw`/`firmware` backlight instead of the PWM one.
+
+## Automatic brightness (light sensor)
+Once brightness actually worked, GNOME's *Automatic Screen Brightness* became visible, and in a dark
+room it kept moving the level up and down. Three things were fixed in our `bh1730` driver:
+
+* **Scale.** It used the bare-sensor datasheet coefficients. The TabPro S firmware provides its own
+  calibration for the dark cover glass, through the `_DSM` of `\_SB.PCI0.I2C5.ALS1` (UUID
+  `518808e9-2eb8-42d3-b5e3-b135f94343c9`, function 1). ROHM's Windows driver (`BH1730Als.dll`) has
+  the same values as defaults:
+
+  | DATA1/DATA0 below | c0 | c1 |
+  |---|---|---|
+  | 0.558 | 4.478 | 5.816 |
+  | 0.697 | 3.674 | 4.376 |
+  | 0.777 | 1.858 | 1.770 |
+  | 3.0 | 0.652 | 0.217 |
+
+  lux = (c0·DATA0 − c1·DATA1) × 100 / (gain × t_int[ms]). The same `_DSM` buffer also holds the
+  initial registers (`CONTROL 0x13`, `TIMING 0xDA`) and Windows' adaptive-brightness curve (lux →
+  %): 1→22, 3→32, 6→40, 10→50, 19→60, 37→70, 71→80, 136→90, 260→100.
+* **Counts in the dark.** At 102.6 ms and maximum gain, a dark room gives about 6 counts, so each
+  reading jumped by up to 3×. The driver now switches to a 688.5 ms integration (`TIMING=0x01`,
+  about 37 counts, roughly ±10 %). `TIMING=0x00` is not a valid 256-cycle setting: it always
+  reads 0.
+* **Blocking reads.** Each read used to sleep for a full conversion (≥100 ms, holding up
+  iio-sensor-proxy). The sensor runs continuously, so a read now returns the last conversion in a
+  few ms, and gain and time are re-ranged in the background.
+
+Light from the AMOLED itself raises the reading by about 17 % between minimum and maximum
+brightness, which is small. But in a very dark room (around 0.2 lx) GNOME's own automatic brightness
+still reacts to tiny absolute changes and keeps hunting. So keep GNOME's option **off**, and let
+`tabpro-s-brightness` do automatic brightness instead:
+
+* **≤ 1 lx → a flat 10 %**. Above that it follows Windows' curve (log-interpolated): 3 lx→32 %,
+  10→50 %, 50→75 %, 136→90 %, ≥ 260 lx→100 %.
+* The light is smoothed over about 3 s, and the brightness only moves when the target changes by
+  ≥ 5 points.
+* Every change, automatic or from the slider or keys, fades through each 1 % step (about 20 ms per
+  step; one step is about 10 ms of AUX writes).
+* If you move the slider yourself, automatic mode keeps your setting until the room light at least
+  doubles or halves.
+
+It writes `intel_backlight`, so GNOME's slider shows the current value. Settings go in
+`/etc/tabpro-s/brightness.conf` (all optional):
+```
+auto = yes                 # no = slider only
+floor_lux = 1
+floor_percent = 10
+curve = 1:22 3:32 6:40 10:50 19:60 37:70 71:80 136:90 260:100
+step = 5
+```

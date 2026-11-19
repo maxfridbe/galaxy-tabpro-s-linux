@@ -21,7 +21,7 @@ real hardware.
 | Hardware | Status | Notes |
 |---|---|---|
 | Display, GPU (Intel HD 515) | ✅ works out of the box | |
-| **Screen brightness** (AMOLED, Parade TCON) | ✅ **with [`brightness/`](brightness/)** | real panel brightness via Samsung's TCON commands; per-unit profile — [docs/12](docs/12-brightness.md) |
+| **Screen brightness** (AMOLED, Parade TCON) | ✅ **with [`brightness/`](brightness/)** | real panel brightness via Samsung's TCON commands, smooth fades, automatic mode; per-unit profile — [docs/12](docs/12-brightness.md) |
 | Wi-Fi (Qualcomm Atheros QCA6174, ath10k) | ✅ out of the box | |
 | Bluetooth (QCA61x4) | ✅ works (discovers devices) | |
 | Touchscreen (Synaptics I2C-HID `SYNP1234`) | ✅ out of the box | |
@@ -33,7 +33,7 @@ real hardware.
 | **Rear camera** (Sony IMX241 5 MP + DW9806B focus) | ✅ **with [`camera/`](camera/)** | libcamera / PipeWire / GNOME Camera; no AF in apps yet |
 | **Front camera** (Sony IMX241 5 MP) | ✅ **with [`camera/`](camera/)** | |
 | Accelerometer (ST LIS2HH12, `SMO8A80`) | ✅ **with packages** | auto-rotation (mount matrix from ACPI `ROTM`) |
-| Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver, firmware lux calibration; GNOME auto-brightness hunts in very dark rooms, so off by default ([docs/12](docs/12-brightness.md#automatic-brightness-light-sensor)) |
+| Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver, firmware lux calibration; automatic brightness by `tabpro-s-brightness` (GNOME's own hunts in the dark) ([docs/12](docs/12-brightness.md#automatic-brightness-light-sensor)) |
 | Proximity (Semtech SX9310, `STH0001`) | ✅ driver works | not used by GNOME |
 | GNSS (Broadcom BCM4752) | ❌ unsupported | closed Broadcom protocol |
 | Pen | ❓ untested | |
