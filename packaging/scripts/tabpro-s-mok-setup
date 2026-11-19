@@ -1,0 +1,38 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Set up the local Machine Owner Key used to sign the Galaxy TabPro S camera modules on this machine.
+# Only needed when Secure Boot is enabled.
+#   sudo tabpro-s-mok-setup                 create a new key (if none) and queue it for enrollment
+#   sudo tabpro-s-mok-setup --import K C    use an existing key/cert pair instead
+#   tabpro-s-mok-setup --status
+set -euo pipefail
+D=/etc/pki/tabpro-s
+CN="Galaxy TabPro S local kernel module signing"
+status() {
+  echo "Secure Boot: $(mokutil --sb-state 2>/dev/null | head -1)"
+  echo "lockdown:    $(cat /sys/kernel/security/lockdown 2>/dev/null)"
+  [ -f $D/mok.der ] && echo "key:         $D/mok.der ($(openssl x509 -inform DER -in $D/mok.der -noout -subject))" || echo "key:         none"
+  if [ -f $D/mok.der ]; then mokutil --test-key $D/mok.der 2>&1 | sed 's/^/enrollment:  /'; fi
+}
+case "${1:-}" in --status) status; exit 0 ;; esac
+[ "$(id -u)" = 0 ] || { echo "run as root"; exit 1; }
+if ! mokutil --sb-state 2>/dev/null | grep -q enabled; then
+  echo "Secure Boot is disabled: no key needed, the camera modules load unsigned."; exit 0
+fi
+install -d -m 0700 $D
+if [ "${1:-}" = "--import" ]; then
+  install -m 0600 "$2" $D/mok.key; openssl x509 -in "$3" -inform "$( [ "$(od -An -tx1 -N1 "$3" | tr -d " ")" = 30 ] && echo DER || echo PEM)" -outform DER -out $D/mok.der
+elif [ ! -f $D/mok.key ]; then
+  openssl req -new -x509 -newkey rsa:2048 -nodes -days 36500 -subj "/CN=$CN/" \
+    -addext "extendedKeyUsage=codeSigning" -keyout $D/mok.key -outform DER -out $D/mok.der 2>/dev/null
+  chmod 0600 $D/mok.key
+fi
+if mokutil --test-key $D/mok.der 2>&1 | grep -q "already enrolled"; then
+  echo "key already enrolled - nothing to do"; exit 0
+fi
+echo "Choose a one-time password; you will type it once at the next boot."
+mokutil --import $D/mok.der
+cat <<MSG
+Now reboot WITH A KEYBOARD attached. On the blue "Perform MOK management" screen (it times out
+after ~10 s): Enroll MOK -> Continue -> Yes -> type the password -> Reboot.
+MSG

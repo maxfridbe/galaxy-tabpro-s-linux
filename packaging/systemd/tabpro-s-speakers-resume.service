@@ -1,0 +1,11 @@
+[Unit]
+Description=Galaxy TabPro S internal speakers: re-enable after resume
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/libexec/tabpro-s/speakers
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

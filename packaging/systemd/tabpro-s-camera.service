@@ -1,0 +1,12 @@
+[Unit]
+Description=Galaxy TabPro S cameras (sign if needed and load IMX241/DW9806B/TPS68470 drivers)
+After=systemd-modules-load.service systemd-udev-settle.service
+ConditionPathExists=/usr/libexec/tabpro-s/camera-load
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/tabpro-s/camera-load
+
+[Install]
+WantedBy=multi-user.target

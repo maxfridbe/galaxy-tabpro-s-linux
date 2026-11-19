@@ -13,3 +13,5 @@ __pycache__/
 *.pkl
 *.raw
 *.bin
+.libcamera-cache/
+site/

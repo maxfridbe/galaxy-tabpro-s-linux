@@ -1,0 +1,11 @@
+[Unit]
+Description=Galaxy TabPro S internal speakers (MAX98925 amps behind ALC298)
+After=sound.target tuned.service
+Wants=sound.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/tabpro-s/speakers
+
+[Install]
+WantedBy=multi-user.target

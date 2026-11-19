@@ -1,0 +1,6 @@
+[tabpro-s]
+name=Samsung Galaxy TabPro S (SM-W700) Linux support
+baseurl=https://maxfridbe.github.io/galaxy-tabpro-s-linux/fedora/$releasever/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=https://maxfridbe.github.io/galaxy-tabpro-s-linux/RPM-GPG-KEY-tabpro-s

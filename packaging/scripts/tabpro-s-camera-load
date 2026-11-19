@@ -1,0 +1,83 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Load the Galaxy TabPro S camera drivers for the running kernel (run by tabpro-s-camera.service).
+#
+#  * modules come unsigned from the tabpro-s-camera-kmods package: /usr/lib/tabpro-s-camera/<kver>/
+#  * if the kernel enforces module signatures (Secure Boot lockdown or module.sig_enforce), they are
+#    signed with the local Machine Owner Key in /etc/pki/tabpro-s/ (see tabpro-s-mok-setup);
+#    otherwise they are loaded as they are
+#  * prepared copies are cached in /var/lib/tabpro-s-camera/<kver>/
+#  * the stock intel_skl_int3472_tps68470 (no board data for this tablet, loaded from the initramfs)
+#    and the stock ipu_bridge (does not know INT347F) are replaced by the patched ones
+set -u
+K="$(uname -r)"
+SRC="/usr/lib/tabpro-s-camera/$K"
+CACHE="/var/lib/tabpro-s-camera/$K"
+KEY=/etc/pki/tabpro-s/mok.key
+CERT=/etc/pki/tabpro-s/mok.der
+log() { echo "tabpro-s-camera: $*"; }
+
+[ "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" = "Galaxy TabPro S" ] || { log "not a Galaxy TabPro S, nothing to do"; exit 0; }
+if [ ! -d "$SRC" ]; then
+  log "no camera modules built for kernel $K yet (installed: $(ls /usr/lib/tabpro-s-camera 2>/dev/null | tr '\n' ' '))"
+  log "update tabpro-s-camera-kmods (rpm-ostree upgrade) - cameras stay off until then"
+  exit 0
+fi
+
+need_sig=0
+grep -qE '\[(integrity|confidentiality)\]' /sys/kernel/security/lockdown 2>/dev/null && need_sig=1
+[ "$(cat /sys/module/module/parameters/sig_enforce 2>/dev/null)" = Y ] && need_sig=1
+
+if [ $need_sig = 1 ]; then
+  if [ ! -r "$KEY" ] || [ ! -r "$CERT" ]; then
+    log "Secure Boot enforces signed modules but no signing key in /etc/pki/tabpro-s/."
+    log "Run 'sudo tabpro-s-mok-setup', reboot with a keyboard and enroll the key (or disable Secure Boot)."
+    exit 0
+  fi
+  log "module signatures enforced: signing with $CERT"
+else
+  log "module signatures not enforced: loading unsigned modules"
+fi
+
+mkdir -p "$CACHE"
+for f in "$SRC"/*.ko; do
+  b="$(basename "$f")"; out="$CACHE/$b"; stamp="$CACHE/$b.src"
+  want="$(sha256sum "$f" | cut -d' ' -f1) sig=$need_sig $( [ $need_sig = 1 ] && sha256sum "$CERT" | cut -d' ' -f1)"
+  if [ ! -f "$out" ] || [ "$(cat "$stamp" 2>/dev/null)" != "$want" ]; then
+    if [ $need_sig = 1 ]; then
+      /usr/libexec/tabpro-s/sign-module "$KEY" "$CERT" "$f" "$out" || { log "signing $b failed"; exit 1; }
+    else
+      cp -f "$f" "$out"
+    fi
+    echo "$want" > "$stamp"
+  fi
+done
+command -v chcon >/dev/null && chcon -t modules_object_t "$CACHE"/*.ko 2>/dev/null
+
+ours() { grep -q O "/sys/module/$1/taint" 2>/dev/null; }          # out-of-tree flag
+loaded() { [ -d "/sys/module/$1" ]; }
+load() {                                   # load in-tree dependencies first, then insmod ours
+  local d
+  for d in $(modinfo -F depends "$CACHE/$2.ko" 2>/dev/null | tr , ' '); do
+    [ "$d" = ipu_bridge ] || modprobe -q "$d" || log "dependency $d of $2 failed"
+  done
+  insmod "$CACHE/$2.ko" || log "insmod $2 failed"
+}
+
+for m in intel_skl_int3472_common clk-tps68470 tps68470-regulator v4l2-cci; do modprobe -q "$m"; done
+
+if ! ours intel_skl_int3472_tps68470; then
+  loaded intel_skl_int3472_tps68470 && rmmod intel_skl_int3472_tps68470
+  load intel_skl_int3472_tps68470 intel_skl_int3472_tps68470
+fi
+if ! ours ipu_bridge; then
+  loaded ipu3_cio2 && modprobe -r ipu3_cio2
+  loaded ipu_bridge && rmmod ipu_bridge
+  load ipu_bridge ipu-bridge
+fi
+loaded dw9806b || load dw9806b dw9806b
+loaded imx241 || load imx241 imx241
+modprobe -q ipu3_cio2
+sleep 2
+log "$(ls /sys/bus/i2c/devices | grep -c '^i2c-INT347F:0[01]$') sensor(s) present, imx241 bound to $(ls /sys/bus/i2c/drivers/imx241 2>/dev/null | grep -c INT347F)"
+exit 0

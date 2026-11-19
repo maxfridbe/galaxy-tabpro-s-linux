@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Sign a Linux kernel module for Secure Boot using only openssl (no kernel-devel needed).
+
+Produces the same appended-signature format as the kernel's scripts/sign-file:
+  <module> <PKCS#7/CMS DER, detached, no attrs, no certs> <struct module_signature> "~Module signature appended~\\n"
+
+usage: tabpro-s-sign-module KEY.pem|KEY.key CERT.der|CERT.pem IN.ko OUT.ko
+An existing signature on IN.ko is stripped first.
+"""
+import os, struct, subprocess, sys, tempfile
+
+MAGIC = b"~Module signature appended~\n"
+
+def strip_sig(data):
+    if not data.endswith(MAGIC):
+        return data
+    sig_len = struct.unpack(">I", data[-len(MAGIC) - 4:-len(MAGIC)])[0]
+    return data[:-(len(MAGIC) + 12 + sig_len)]
+
+def main():
+    if len(sys.argv) != 5:
+        sys.exit(__doc__)
+    key, cert, src, dst = sys.argv[1:]
+    mod = strip_sig(open(src, "rb").read())
+    with tempfile.TemporaryDirectory() as td:
+        m = os.path.join(td, "m"); open(m, "wb").write(mod)
+        c = os.path.join(td, "c.pem")
+        fmt = "DER" if open(cert, "rb").read(1) == b"\x30" else "PEM"
+        subprocess.run(["openssl", "x509", "-inform", fmt, "-in", cert, "-out", c], check=True)
+        s = os.path.join(td, "s")
+        subprocess.run(["openssl", "cms", "-sign", "-binary", "-noattr", "-nocerts", "-nosmimecap",
+                        "-md", "sha256", "-signer", c, "-inkey", key, "-outform", "DER",
+                        "-in", m, "-out", s], check=True)
+        sig = open(s, "rb").read()
+    # struct module_signature: algo, hash, id_type (2 = PKEY_ID_PKCS7), signer_len, key_id_len, pad[3], be32 sig_len
+    trailer = struct.pack(">BBBBB3xI", 0, 0, 2, 0, 0, len(sig)) + MAGIC
+    tmp = dst + ".tmp"
+    open(tmp, "wb").write(mod + sig + trailer)
+    os.replace(tmp, dst)
+
+if __name__ == "__main__":
+    main()

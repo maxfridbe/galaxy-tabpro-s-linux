@@ -1,0 +1,53 @@
+name: Build RPM repository
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * *"     # daily: pick up new Fedora kernels / libcamera
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:45
+    steps:
+      - name: Install git
+        run: dnf install -y -q git tar gzip
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: libcamera cache
+        uses: actions/cache@v4
+        with:
+          path: .libcamera-cache
+          key: libcamera-fc45-${{ hashFiles('camera/libcamera/*.patch') }}-${{ github.run_id }}
+          restore-keys: libcamera-fc45-${{ hashFiles('camera/libcamera/*.patch') }}-
+      - name: Build packages and repository
+        env:
+          RPM_GPG_PRIVATE_KEY: ${{ secrets.RPM_GPG_PRIVATE_KEY }}
+          LIBCAMERA_CACHE: ${{ github.workspace }}/.libcamera-cache
+          OUT: ${{ github.workspace }}/site
+        run: packaging/ci/build-repo.sh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
