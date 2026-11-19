@@ -55,6 +55,9 @@ cp "$CACHE"/*.rpm "$ARCHDIR/"
 find "$B/RPMS" -name '*.rpm' -exec cp {} "$ARCHDIR/" \;
 
 # ---- sign + repo metadata
+if [ -n "${GITHUB_ACTIONS:-}" ] && [ -z "${RPM_GPG_PRIVATE_KEY:-}" ]; then
+  echo "RPM_GPG_PRIVATE_KEY secret is not set - refusing to publish unsigned packages"; exit 1
+fi
 if [ -n "${RPM_GPG_PRIVATE_KEY:-}" ]; then
   export GNUPGHOME="$(mktemp -d)"
   echo "$RPM_GPG_PRIVATE_KEY" | gpg --batch --import 2>/dev/null
