@@ -59,7 +59,7 @@ extern "win64" fn engine_pos_req_state(state: u32) {
 extern "win64" fn engine_location(buf: usize, size: u32, ctx: usize) {
     static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    if n < 3 || rt::VERBOSE.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
+    if rt::VERBOSE.load(std::sync::atomic::Ordering::Relaxed) >= 3 { // contains the position
         let b = unsafe { std::slice::from_raw_parts(buf as *const u8, (size as usize).min(0x980)) };
         log!(0, "location report #{n} ({size} B, ctx {ctx:#x}):");
         for (i, c) in b.chunks(32).enumerate().take(24) {
@@ -98,7 +98,9 @@ fn make_config(src: &str, root: &str) -> Result<String, String> {
     LogEnabled="false"
     DisableConsoleIO="true"
     LogDirectory="C:\log"
-    AssistanceSources="0x0"
+    AssistanceSources="0x1A1"
+    NtpServer="pool.ntp.org"
+    Utc2GpsOff="18"
     NvStoWriteToFile="true"
     LtoDownloadIntervalSeconds="14400"
     LogLineThreshold="1000000"

@@ -12,6 +12,8 @@ for the two things that have never worked on Linux on this tablet:
 * **both cameras** — no driver for the sensor, no power-up data for the camera PMIC
 * **screen brightness** — the AMOLED ignores every standard backlight control; it needs an unlock
   key and Samsung's gamma commands to the Parade timing controller
+* **GPS** — the Broadcom receiver needs Broadcom's closed Windows engine; it now runs natively on
+  Linux through a small PE loader (no Wine)
 
 All of these were reverse-engineered from the Windows drivers (without redistributing them) and verified on
 real hardware.
@@ -35,14 +37,14 @@ real hardware.
 | Accelerometer (ST LIS2HH12, `SMO8A80`) | ✅ **with packages** | auto-rotation (mount matrix from ACPI `ROTM`) |
 | Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver, firmware lux calibration; automatic brightness by `tabpro-s-brightness` (GNOME's own hunts in the dark) ([docs/12](docs/12-brightness.md#automatic-brightness-light-sensor)) |
 | Proximity (Semtech SX9310, `STH0001`) | ✅ driver works | not used by GNOME |
-| GNSS (Broadcom BCM4752) | ❌ unsupported | closed Broadcom protocol |
+| **GPS / GNSS** (Broadcom BCM4752, `SSE4752`) | ✅ **with [`gnss/`](gnss/)** | Broadcom's `BcmGnss.dll` (copied from your Windows driver, not included) runs natively via `tabpro-s-gnss`; GPS + GLONASS fix in ~1 min, feeds GeoClue / GNOME Maps |
 | Pen | ❓ untested | |
 
 ## Quick start (Fedora Silverblue / Fedora — RPM packages)
 
 ```
 sudo curl -Lo /etc/yum.repos.d/tabpro-s.repo https://maxfridbe.github.io/galaxy-tabpro-s-linux/tabpro-s.repo
-rpm-ostree install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods tabpro-s-brightness
+rpm-ostree install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods tabpro-s-brightness tabpro-s-gnss
 rpm-ostree override replace --experimental --from repo=tabpro-s libcamera libcamera-ipa
 systemctl reboot
 # only if Secure Boot is enabled (one time, needs a keyboard at the next boot):
@@ -52,6 +54,7 @@ sudo tabpro-s-mok-setup && systemctl reboot
 Packages are rebuilt daily for the newest Fedora kernels and signed (key `380F78FE…BD1C40C8`);
 `rpm-ostree upgrade` keeps everything current. Details: [docs/11-packages.md](docs/11-packages.md).
 Brightness additionally needs a one-time per-panel profile: [docs/12](docs/12-brightness.md).
+GPS needs `BcmGnss.dll` + `BcmGnssConfig.xml` from your Windows driver in `/var/lib/tabpro-s-gnss/`: [gnss/README.md](gnss/README.md).
 
 ## Manual install (from source)
 
@@ -94,11 +97,14 @@ Brightness additionally needs a one-time per-panel profile: [docs/12](docs/12-br
 | [10 – Other distributions](docs/10-other-distros.md) | Fedora Workstation, Ubuntu, Arch: DKMS etc. |
 | [11 – RPM packages](docs/11-packages.md) | the signed dnf repo, CI, Secure Boot handling |
 | [12 – Screen brightness](docs/12-brightness.md) | why the slider did nothing, the Parade TCON unlock, profile generation |
+| [GNSS / GPS](gnss/README.md) | BCM4752 driver, running Broadcom's engine natively, install, findings |
 
 ## Repository layout
 
 ```
 brightness/     AMOLED brightness daemon + systemd unit (needs a per-panel profile, docs/12)
+gnss/           GPS: bcm4752 kernel driver, tabpro-s-gnss (Rust PE loader for BcmGnss.dll) + prebuilt
+                binary in gnss/bin, systemd unit, GeoClue config, SELinux module
 audio/          speaker fix: w700-speakers (Python, no deps), systemd units, install.sh
 camera/
   kernel/       imx241 (new), dw9806b (new), int3472 tps68470 + board data, ipu-bridge + INT347F
@@ -115,9 +121,9 @@ docs/           all the documentation
 
 ## Licence
 
-Kernel code (`camera/kernel/`, `re/w700acpi.c`) is **GPL-2.0** like the kernel it derives from; the
+Kernel code (`camera/kernel/`, `sensors/kernel/`, `gnss/kernel/`, `re/w700acpi.c`) is **GPL-2.0** like the kernel it derives from; the
 libcamera patch is **LGPL-2.1-or-later**; everything else is **GPL-2.0-or-later** — see
-[LICENSE](LICENSE). No Windows driver binaries or firmware are included; only register values and
+[LICENSE](LICENSE). No Windows driver binaries or firmware are included (the GPS engine must be copied from your own Windows install); only register values and
 sequences (hardware facts) extracted from them.
 
 **No warranty.** The speaker fix drives the amplifiers without the speaker-protection DSP Windows

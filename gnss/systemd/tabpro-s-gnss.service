@@ -1,0 +1,23 @@
+[Unit]
+Description=Galaxy TabPro S GPS/GNSS (Broadcom BCM4752 engine, NMEA for GeoClue)
+Documentation=https://github.com/maxfridbe/galaxy-tabpro-s-linux/tree/main/gnss
+# the engine is Broadcom's own BcmGnss.dll, copied from the tablet's Windows driver (not shipped)
+ConditionPathExists=/var/lib/tabpro-s-gnss/BcmGnss.dll
+After=tabpro-s-camera.service
+Wants=tabpro-s-camera.service
+
+[Service]
+Type=simple
+WorkingDirectory=/var/lib/tabpro-s-gnss
+RuntimeDirectory=tabpro-s-gnss
+RuntimeDirectoryMode=0755
+# wait for the bcm4752 driver (loaded by tabpro-s-camera.service), then create gpsconfig.xml once
+ExecStartPre=/bin/sh -c 'for i in $(seq 30); do ls /sys/class/gnss/*/device/regpu >/dev/null 2>&1 && break; sleep 1; done; \
+  [ -f gpsconfig.xml ] || /usr/bin/tabpro-s-gnss --make-config BcmGnssConfig.xml'
+ExecStart=/usr/bin/tabpro-s-gnss -v
+StandardInput=null
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

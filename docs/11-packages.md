@@ -4,8 +4,9 @@
 |---|---|
 | `tabpro-s-audio` (noarch) | speaker fix (`/usr/libexec/tabpro-s/speakers`), boot + resume services, `/etc/tabpro-s/speakers.conf` (gain), HDA `power_save=0` |
 | `tabpro-s-camera` (noarch) | `tabpro-s-camera.service` + loader, openssl module signer, `tabpro-s-mok-setup`, accelerometer mount-matrix hwdb |
-| `tabpro-s-camera-kmods` (x86_64) | **unsigned** modules for the newest 4 Fedora kernels: TPS68470 board data, ipu-bridge, imx241, dw9806b, st_accel_i2c, sx9310, bh1730 |
+| `tabpro-s-camera-kmods` (x86_64) | **unsigned** modules for the newest 4 Fedora kernels: TPS68470 board data, ipu-bridge, imx241, dw9806b, st_accel_i2c, sx9310, bh1730, bcm4752 (GNSS) |
 | `tabpro-s-brightness` (noarch) | AMOLED brightness daemon (Parade TCON); needs `/etc/tabpro-s/amoled-profile.json`, see [12](12-brightness.md) |
+| `tabpro-s-gnss` (x86_64) | GPS: `tabpro-s-gnss` (runs Broadcom's `BcmGnss.dll` natively), boot service, GeoClue config, SELinux module; needs `BcmGnss.dll` + `BcmGnssConfig.xml` in `/var/lib/tabpro-s-gnss/`, see [gnss/README.md](../gnss/README.md) |
 | `libcamera`, `libcamera-ipa` (`*.w700.1`) | libcamera with the IMX241 sensor helper |
 
 ## How the kernel modules work

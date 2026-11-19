@@ -20,22 +20,24 @@ Requires:       tabpro-s-camera
 Out-of-tree kernel modules for the Samsung Galaxy TabPro S cameras, built for these kernels:
 %{kvers}
 Modules: intel_skl_int3472_tps68470 (with TabPro S board data), ipu-bridge (with INT347F),
-imx241, dw9806b; sensors: st_accel_i2c (LIS2HH12 SMO8A80), sx9310 (STH0001), bh1730 (light).
+imx241, dw9806b; sensors: st_accel_i2c (LIS2HH12 SMO8A80), sx9310 (STH0001), bh1730 (light); GNSS: bcm4752 (SSE4752).
 They are stored outside /lib/modules and loaded (signed locally if Secure Boot
 requires it) by tabpro-s-camera.service.
 
 %prep
 %build
 for k in %{kvers}; do
-  rm -rf build-$k build-sensors-$k && cp -r %{repo}/camera/kernel build-$k && cp -r %{repo}/sensors/kernel build-sensors-$k
+  rm -rf build-$k build-sensors-$k build-gnss-$k && cp -r %{repo}/camera/kernel build-$k && cp -r %{repo}/sensors/kernel build-sensors-$k
+  cp -r %{repo}/gnss/kernel build-gnss-$k
   make -C build-$k KVER=$k KDIR=/usr/src/kernels/$k
   make -C build-sensors-$k KVER=$k KDIR=/usr/src/kernels/$k
+  make -C build-gnss-$k KVER=$k KDIR=/usr/src/kernels/$k
 done
 
 %install
 for k in %{kvers}; do
   install -d %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k
-  install -m 0644 build-$k/*/*.ko build-sensors-$k/*/*.ko %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k/
+  install -m 0644 build-$k/*/*.ko build-sensors-$k/*/*.ko build-gnss-$k/*/*.ko %{buildroot}%{_prefix}/lib/tabpro-s-camera/$k/
 done
 
 %files

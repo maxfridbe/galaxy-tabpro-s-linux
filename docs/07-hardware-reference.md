@@ -25,7 +25,11 @@
 
 ## Sensors (untested on Linux)
 `SMO8A80` K2HH accelerometer, `TOBH1733` BH1730 ambient light, `STH0001` SX931x proximity,
-`SSE4752` Broadcom GNSS 4752 — all on `\_SB.PCI0.I2C?` (INT3447 = I2C controller).
+all on `\_SB.PCI0.I2C?` (INT3447 = I2C controller).
+
+## GNSS
+`SSE4752` Broadcom BCM4752 (`\_SB.GPS0`) on LPSS UART `ttyS4`: 115 200 baud at power-up (engine
+switches to 921 600), RTS/CTS, GPIO `RPIN` = REGPU power enable. See [gnss/README.md](../gnss/README.md).
 
 ## Cameras
 See [04-camera.md](04-camera.md). Summary:

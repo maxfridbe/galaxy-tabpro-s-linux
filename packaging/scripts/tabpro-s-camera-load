@@ -78,8 +78,8 @@ fi
 loaded dw9806b || load dw9806b dw9806b
 loaded imx241 || load imx241 imx241
 modprobe -q ipu3_cio2
-# sensors (no in-tree driver matches their ACPI ids, so the stock modules never autoload)
-for m in st_accel_i2c sx9310 bh1730; do
+# sensors and GNSS (no in-tree driver matches their ACPI ids, so the stock modules never autoload)
+for m in st_accel_i2c sx9310 bh1730 bcm4752; do
   [ -f "$CACHE/$m.ko" ] || continue
   if loaded $m && ! ours $m; then rmmod $m 2>/dev/null; fi
   loaded $m || load $m $m

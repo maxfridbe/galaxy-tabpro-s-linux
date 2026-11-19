@@ -14,7 +14,7 @@ ARCHDIR="$OUT/fedora/$REL/x86_64"
 mkdir -p "$ARCHDIR" "$CACHE"
 
 dnf install -y -q rpm-build rpm-sign createrepo_c gcc make elfutils-libelf-devel openssl git gnupg2 \
-  python3 fedora-repos-archive 'dnf-command(download)' 'dnf-command(builddep)' >/dev/null
+  python3 cargo rust checkpolicy policycoreutils selinux-policy-devel systemd-rpm-macros fedora-repos-archive 'dnf-command(download)' 'dnf-command(builddep)' >/dev/null
 
 git config --global --add safe.directory "$SRC"
 COUNT="$(git -C "$SRC" rev-list --count HEAD 2>/dev/null || echo 1)"
@@ -32,6 +32,7 @@ rb() { rpmbuild -bb --define "_topdir $B" --define "repo $SRC" "$@"; }
 rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-audio.spec" >/dev/null
 rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-camera.spec" >/dev/null
 rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-brightness.spec" >/dev/null
+rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-gnss.spec" >/dev/null
 rb --define "rel $COUNT.k$LATEST" --define "kvers ${KVERS[*]}" "$SRC/packaging/specs/tabpro-s-camera-kmods.spec" >/dev/null
 
 # ---- libcamera with the IMX241 patch (rebuilt only when Fedora's libcamera or the patch changes)

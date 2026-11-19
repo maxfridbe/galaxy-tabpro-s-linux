@@ -94,13 +94,13 @@ table! {
     "shell32.dll": [ SHGetSpecialFolderPathA = o::SHGetSpecialFolderPathA ],
     "ws2_32.dll": [
         WSACloseEvent = o::WSACloseEvent, WSAEnumNetworkEvents = o::sock_err, WSAResetEvent = o::WSAResetEvent,
-        getprotobyname = o::getprotobyname, shutdown = o::sock_err, recvfrom = o::sock_err, select = o::sock_err,
+        getprotobyname = o::getprotobyname, shutdown = o::sock_ok, recvfrom = o::recvfrom, select = o::select,
         WSAGetLastError = o::WSAGetLastError, inet_ntoa = o::inet_ntoa, gethostname = o::gethostname,
         WSAAddressToStringA = o::sock_err, getaddrinfo = o::getaddrinfo, WSAEventSelect = o::sock_err,
-        freeaddrinfo = o::freeaddrinfo, connect = o::sock_err, ntohl = o::ntohl, htonl = o::htonl, bind = o::sock_err,
-        gethostbyname = o::gethostbyname, socket = o::socket, sendto = o::sock_err, closesocket = o::closesocket,
+        freeaddrinfo = o::freeaddrinfo, connect = o::sock_ok, ntohl = o::ntohl, htonl = o::htonl, bind = o::sock_ok,
+        gethostbyname = o::gethostbyname, socket = o::socket, sendto = o::sendto, closesocket = o::closesocket,
         WSACleanup = o::WSACleanup, WSAStartup = o::WSAStartup, inet_addr = o::inet_addr, htons = o::htons,
-        recv = o::sock_err, send = o::sock_err, WSACreateEvent = o::WSACreateEvent, ioctlsocket = o::sock_err,
+        recv = o::recv, send = o::send, WSACreateEvent = o::WSACreateEvent, ioctlsocket = o::sock_ok,
         WSASetLastError = o::WSASetLastError,
     ],
     "winhttp.dll": [

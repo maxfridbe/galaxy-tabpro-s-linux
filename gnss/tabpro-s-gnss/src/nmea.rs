@@ -26,6 +26,7 @@ pub fn serve(path: &str) {
     log!(0, "NMEA on unix socket {path}");
     std::thread::spawn(move || {
         for c in l.incoming().flatten() {
+            let _ = c.set_nonblocking(true); // a stalled reader must never block the engine
             CLIENTS.lock().unwrap().push(c);
         }
     });
@@ -40,14 +41,16 @@ pub fn output(data: &[u8]) {
         if s.is_empty() {
             continue;
         }
-        if s.contains("GGA") || s.contains("RMC") {
+        if s.contains("GGA") {
+            // status only: positions are private, never logged at the default level
+            let f: Vec<&str> = s.split(',').collect();
             let mut ll = LAST_LOG.lock().unwrap();
-            if ll.is_none_or(|t| t.elapsed().as_secs() >= 10) {
-                log!(0, "nmea: {s}");
+            if f.len() > 8 && ll.is_none_or(|t| t.elapsed().as_secs() >= 60) {
+                log!(0, "fix quality {} satellites {} hdop {}", f[6], f[7], f[8]);
                 *ll = Some(std::time::Instant::now());
             }
         }
-        log!(2, "nmea: {s}");
+        log!(3, "nmea: {s}");
         let out = format!("{s}\r\n");
         CLIENTS.lock().unwrap().retain_mut(|c| c.write_all(out.as_bytes()).is_ok());
     }
@@ -85,11 +88,19 @@ pub fn location_report(buf: usize, size: usize) {
     let speed = f64_(152);
     let course = f64_(184);
     let nsat = u16_(198);
-    let valid = fix_type >= 2 && (lat != 0.0 || lon != 0.0) && acc < 1000.0 && year >= 2020;
+    let valid = fix_type >= 2 && (lat != 0.0 || lon != 0.0) && acc < 1000.0;
+    // If the engine's date is off (GPS week rollover without time aiding), report system UTC.
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let eng = days_from_civil(year as i64, month as u32, day as u32) * 86400 + hour as i64 * 3600 + min as i64 * 60 + sec as i64;
+    let (year, month, day, hour, min, sec, ms) = if (eng - now).abs() > 86400 {
+        log!(2, "engine date {year}-{month:02}-{day:02} is off; using system UTC");
+        let (y, mo, d) = civil_from_days(now.div_euclid(86400));
+        let sod = now.rem_euclid(86400);
+        (y as u16, mo as u16, d as u16, (sod / 3600) as u16, (sod / 60 % 60) as u16, (sod % 60) as u16, 0)
+    } else {
+        (year, month, day, hour, min, sec, ms)
+    };
     log!(2, "report: fix_type={fix_type} acc={acc:.1} m hdop={hdop:.1} sats={nsat} valid={valid}");
-    if year < 2020 {
-        return; // no time yet
-    }
     let t = format!("{hour:02}{min:02}{sec:02}.{:02}", ms / 10);
     let (la, lo) = if valid { (ddmm(lat, 'N', 'S', 2), ddmm(lon, 'E', 'W', 3)) } else { (",".into(), ",".into()) };
     let gga = if valid {
@@ -106,4 +117,24 @@ pub fn location_report(buf: usize, size: usize) {
         if valid { 'A' } else { 'N' }
     );
     output(format!("{}\r\n{}\r\n", checksum(&gga), checksum(&rmc)).as_bytes());
+}
+
+fn days_from_civil(y: i64, m: u32, d: u32) -> i64 {
+    let y = y - (m <= 2) as i64;
+    let era = y.div_euclid(400);
+    let yoe = y.rem_euclid(400);
+    let mp = (m as i64 + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d as i64 - 1;
+    era * 146097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719468
+}
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719468;
+    let era = z.div_euclid(146097);
+    let doe = z.rem_euclid(146097);
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (yoe + era * 400 + (m <= 2) as i64, m, d)
 }
