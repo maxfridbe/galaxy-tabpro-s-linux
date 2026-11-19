@@ -33,7 +33,7 @@ real hardware.
 | **Rear camera** (Sony IMX241 5 MP + DW9806B focus) | ✅ **with [`camera/`](camera/)** | libcamera / PipeWire / GNOME Camera; no AF in apps yet |
 | **Front camera** (Sony IMX241 5 MP) | ✅ **with [`camera/`](camera/)** | |
 | Accelerometer (ST LIS2HH12, `SMO8A80`) | ✅ **with packages** | auto-rotation (mount matrix from ACPI `ROTM`) |
-| Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver; GNOME automatic brightness |
+| Ambient light (ROHM BH1730FVC, `TOBH1733`) | ✅ **with packages** | new driver, firmware lux calibration; GNOME auto-brightness hunts in very dark rooms, so off by default ([docs/12](docs/12-brightness.md#automatic-brightness-light-sensor)) |
 | Proximity (Semtech SX9310, `STH0001`) | ✅ driver works | not used by GNOME |
 | GNSS (Broadcom BCM4752) | ❌ unsupported | closed Broadcom protocol |
 | Pen | ❓ untested | |
