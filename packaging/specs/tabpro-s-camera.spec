@@ -35,7 +35,6 @@ ln -s ../tabpro-s-camera.service %{buildroot}%{_unitdir}/multi-user.target.wants
 install -D -m 0644 %{repo}/sensors/61-tabpro-s-accel.hwdb %{buildroot}%{_prefix}/lib/udev/hwdb.d/61-tabpro-s-accel.hwdb
 install -d %{buildroot}%{_tmpfilesdir}
 echo "d /var/lib/tabpro-s-camera 0755 root root -" > %{buildroot}%{_tmpfilesdir}/tabpro-s-camera.conf
-%{_prefix}/lib/udev/hwdb.d/61-tabpro-s-accel.hwdb
 
 %files
 %{_libexecdir}/tabpro-s/camera-load
