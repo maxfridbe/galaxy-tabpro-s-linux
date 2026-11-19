@@ -1,0 +1,15 @@
+# Let GeoClue read NMEA from tabpro-s-gnss's unix socket (/run/tabpro-s-gnss/nmea.sock).
+module tabpro_s_gnss 1.0;
+
+require {
+	type geoclue_t;
+	type unconfined_service_t;
+	type var_run_t;
+	class unix_stream_socket connectto;
+	class sock_file write;
+	class dir search;
+}
+
+allow geoclue_t unconfined_service_t:unix_stream_socket connectto;
+allow geoclue_t var_run_t:sock_file write;
+allow geoclue_t var_run_t:dir search;
