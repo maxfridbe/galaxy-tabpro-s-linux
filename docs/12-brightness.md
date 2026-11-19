@@ -82,11 +82,12 @@ toolbox create re && toolbox run -c re pip install --user capstone pefile unicor
 # or from Samsung's driver package
 RTRE_SYS=SAMOPanel.sys toolbox run -c re python3 re/samo-profile.py -o amoled-profile.json
 sudo install -Dm0644 amoled-profile.json /etc/tabpro-s/amoled-profile.json
-sudo install -m0755 brightness/tabpro-s-brightness /usr/local/sbin/
-sudo install -m0644 brightness/tabpro-s-brightness.service /etc/systemd/system/
-sudo systemctl enable --now tabpro-s-brightness
+rpm-ostree install tabpro-s-brightness && systemctl reboot      # from the package repo (docs/11)
 ```
-One-shot test without the service: `sudo tabpro-s-brightness 30`.
+Without the package: `sudo install -m0755 brightness/tabpro-s-brightness /usr/local/sbin/`,
+`sudo install -m0644 brightness/tabpro-s-brightness.service /etc/systemd/system/`,
+`sudo systemctl enable --now tabpro-s-brightness`. The service only starts when the profile exists.
+One-shot test without the service: `sudo /usr/libexec/tabpro-s/brightness 30` (package) or `sudo tabpro-s-brightness 30`.
 
 Notes:
 * Panel Self Refresh (PSR1, the i915 default) can stay on; brightness works with it.

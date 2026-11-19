@@ -31,6 +31,7 @@ B="$(mktemp -d)"
 rb() { rpmbuild -bb --define "_topdir $B" --define "repo $SRC" "$@"; }
 rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-audio.spec" >/dev/null
 rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-camera.spec" >/dev/null
+rb --define "rel $COUNT" "$SRC/packaging/specs/tabpro-s-brightness.spec" >/dev/null
 rb --define "rel $COUNT.k$LATEST" --define "kvers ${KVERS[*]}" "$SRC/packaging/specs/tabpro-s-camera-kmods.spec" >/dev/null
 
 # ---- libcamera with the IMX241 patch (rebuilt only when Fedora's libcamera or the patch changes)

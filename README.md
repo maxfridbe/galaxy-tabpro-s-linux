@@ -42,7 +42,7 @@ real hardware.
 
 ```
 sudo curl -Lo /etc/yum.repos.d/tabpro-s.repo https://maxfridbe.github.io/galaxy-tabpro-s-linux/tabpro-s.repo
-rpm-ostree install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods
+rpm-ostree install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods tabpro-s-brightness
 rpm-ostree override replace --experimental --from repo=tabpro-s libcamera libcamera-ipa
 systemctl reboot
 # only if Secure Boot is enabled (one time, needs a keyboard at the next boot):
@@ -51,6 +51,7 @@ sudo tabpro-s-mok-setup && systemctl reboot
 (Fedora Workstation: `sudo dnf install tabpro-s-audio tabpro-s-camera tabpro-s-camera-kmods libcamera`.)
 Packages are rebuilt daily for the newest Fedora kernels and signed (key `380F78FE…BD1C40C8`);
 `rpm-ostree upgrade` keeps everything current. Details: [docs/11-packages.md](docs/11-packages.md).
+Brightness additionally needs a one-time per-panel profile: [docs/12](docs/12-brightness.md).
 
 ## Manual install (from source)
 

@@ -5,6 +5,7 @@
 | `tabpro-s-audio` (noarch) | speaker fix (`/usr/libexec/tabpro-s/speakers`), boot + resume services, `/etc/tabpro-s/speakers.conf` (gain), HDA `power_save=0` |
 | `tabpro-s-camera` (noarch) | `tabpro-s-camera.service` + loader, openssl module signer, `tabpro-s-mok-setup`, accelerometer mount-matrix hwdb |
 | `tabpro-s-camera-kmods` (x86_64) | **unsigned** modules for the newest 4 Fedora kernels: TPS68470 board data, ipu-bridge, imx241, dw9806b, st_accel_i2c, sx9310, bh1730 |
+| `tabpro-s-brightness` (noarch) | AMOLED brightness daemon (Parade TCON); needs `/etc/tabpro-s/amoled-profile.json`, see [12](12-brightness.md) |
 | `libcamera`, `libcamera-ipa` (`*.w700.1`) | libcamera with the IMX241 sensor helper |
 
 ## How the kernel modules work
