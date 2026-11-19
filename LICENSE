@@ -1,0 +1,11 @@
+Galaxy TabPro S Linux support — licensing
+
+* camera/kernel/** and re/w700acpi.c: GNU General Public License version 2 only (GPL-2.0),
+  as they are derived from / intended for the Linux kernel. See LICENSE.GPL-2.0.
+* camera/libcamera/*.patch: GNU Lesser General Public License 2.1 or later (LGPL-2.1-or-later),
+  the licence of libcamera.
+* Everything else (scripts, tools, documentation): GNU General Public License version 2 or
+  (at your option) any later version (GPL-2.0-or-later). See LICENSE.GPL-2.0.
+
+No Windows drivers, firmware or other third-party binaries are distributed in this repository.
+Register values and sequences documented here are facts about the hardware.

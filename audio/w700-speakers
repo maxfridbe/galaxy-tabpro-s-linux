@@ -1,0 +1,107 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""w700-speakers: enable the internal speakers of the Samsung Galaxy TabPro S (SM-W700).
+
+Codec: Realtek ALC298 (HDA subsystem 144d:c135). The speakers are driven by two
+Maxim MAX98925 smart amps on the codec's internal bus bridge (7-bit addr 0x31, 0x34).
+Linux never powers up the codec's internal I2S block (bridge device 0x1b) nor sets the
+amps' GLOBAL_ENABLE, so the speakers stay silent.
+
+This replays the Windows RTKVHD64.sys playback power-up for device 0x1b (function
+0x39ee78, extracted by emulation) and then enables both amps (MAX98925 reg 0x38 = 0x80).
+Bridge protocol (ALC298 vendor coefs on NID 0x20): 0x22 addr, 0x23 reg, 0x25 data,
+0x26 cmd/status (bit14 busy), 0x28 read data, 0x89 reg-hi. Commands: 0xb010/0xb018 8-bit
+reg+data write/read, 0xb013/0xb01b 16-bit reg+data write/read.
+"""
+import fcntl, os, struct, sys, time
+
+DEV = '/dev/snd/hwC0D0'
+FD = None
+def verb(nid, v, p=0):
+    cmd = (nid << 24) | (v << 8) | p
+    return struct.unpack('II', fcntl.ioctl(FD, 0xC0084811, struct.pack('II', cmd, 0)))[1]
+def coef_w(idx, val, nid=0x20): verb(nid, 0x500, idx); verb(nid, 0x400, val)
+def coef_r(idx, nid=0x20): verb(nid, 0x500, idx); return verb(nid, 0xc00, 0)
+def _wait():
+    for _ in range(100):
+        if not coef_r(0x26) & 0x4000: return
+        time.sleep(0.001)
+def _start(): coef_w(0x26, coef_r(0x26) | 0x4000)
+def w16(dev, reg, val):
+    _wait(); _start(); coef_w(0x22, dev); coef_w(0x25, val); coef_w(0x23, reg); coef_w(0x26, 0xb013)
+def w8(dev, reg, val):
+    _wait(); _start(); coef_w(0x22, dev); coef_w(0x25, val); coef_w(0x23, reg); coef_w(0x26, 0xb010); _wait()
+def r8(dev, reg):
+    _wait(); _start(); coef_w(0x22, dev); coef_w(0x23, reg); coef_w(0x26, 0xb018); _wait(); time.sleep(0.002)
+    return coef_r(0x28) & 0xff
+
+POWERUP_1B = [
+    ('w', 0x0111, 0xa502),
+    ('w', 0x013a, 0x3030),
+    ('w', 0x006e, 0xef00),
+    ('w', 0x006f, 0xef00),
+    ('w', 0x0070, 0x8020),
+    ('w', 0x00fa, 0x8001),
+    ('w', 0x0073, 0x0000),
+    ('w', 0x0125, 0x0120),
+    ('w', 0x0091, 0x0c16),
+    ('w', 0x0063, 0xa23e),
+    ('s', 20, 0),
+    ('w', 0x0063, 0xf23e),
+    ('w', 0x0061, 0x8080),
+    ('w', 0x008e, 0x0009),
+    ('w', 0x0061, 0x8c80),
+    ('w', 0x0125, 0x0120),
+    ('s', 20, 0),
+    ('w', 0x0091, 0x0e16),
+    ('s', 20, 0),
+    ('w', 0x0125, 0x0420),
+    ('w', 0x0062, 0x0400),
+    ('w', 0x0002, 0x0000),
+    ('w', 0x0091, 0x0e1e),
+    ('w', 0x0161, 0x0041),
+    ('w', 0x0162, 0x040c),
+    ('w', 0x0160, 0x8ec0),
+    ('w', 0x008e, 0x0019),
+    ('w', 0x0015, 0xa8f0),
+    ('w', 0x0015, 0xa8f9),
+    ('w', 0x0094, 0x0180),
+    ('w', 0x00fb, 0x3000),
+]
+AMPS = (0x31, 0x34)          # left, right (verified by listening test)
+CONF = '/etc/w700-speakers.conf'  # optional: GAIN=<0..31>  (dB = GAIN - 6; firmware default 25)
+
+def load_gain():
+    try:
+        for line in open(CONF):
+            k, _, v = line.partition('=')
+            if k.strip() == 'GAIN': return max(0, min(31, int(v.strip(), 0)))
+    except (OSError, ValueError):
+        pass
+    return 25
+
+def main():
+    global FD
+    for _ in range(100):
+        if os.path.exists(DEV): break
+        time.sleep(0.2)
+    FD = os.open(DEV, os.O_RDWR)
+    vendor = verb(0, 0xf00, 0); ssid = verb(1, 0xf20, 0)
+    if vendor != 0x10ec0298 or ssid != 0x144dc135:
+        print(f"w700-speakers: not a TabPro S codec (vendor {vendor:#x} ssid {ssid:#x}); doing nothing"); return 0
+    if r8(0x31, 0xff) not in (0x51, 0x80):
+        print("w700-speakers: MAX98925 not found at 0x31; doing nothing"); return 1
+    for op, a, b in POWERUP_1B:
+        if op == 'w': w16(0x1b, a, b)
+        else: time.sleep(a / 1000)
+    gain = load_gain()
+    for ch, d in enumerate(AMPS):
+        for r in (0x0e, 0x0f, 0x10): w8(d, r, 0xff)   # clear latched IRQ flags
+        w8(d, 0x2d, (ch << 5) | gain)                 # GAIN: DAC_IN_SEL left/right DAI + SPK_GAIN
+        w8(d, 0x38, 0x80)                             # MAX98925 GLOBAL_ENABLE
+    st = [f"{d:#04x}:en={r8(d, 0x38):#04x},gain={r8(d, 0x2d):#04x}" for d in AMPS]
+    print("w700-speakers: enabled", " ".join(st))
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

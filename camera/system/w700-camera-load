@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Load the Galaxy TabPro S camera stack. Called by w700-camera.service at boot.
+# The stock intel_skl_int3472_tps68470 is usually loaded from the initramfs and has no board data
+# for this tablet ("No board-data found for this model"), so it is replaced by the patched one.
+D=/usr/local/lib/w700-camera            # ostree (Silverblue) install location
+load() {                                # load patched module $1 (file $2) from $D or via modprobe
+  if [ -f "$D/$2.ko" ]; then insmod "$D/$2.ko"; else modprobe "$1"; fi
+}
+modprobe -q intel_skl_int3472_common; modprobe -q clk-tps68470; modprobe -q tps68470-regulator; modprobe -q v4l2-cci
+if ! ls /sys/bus/i2c/devices 2>/dev/null | grep -q '^i2c-INT347F'; then
+  rmmod intel_skl_int3472_tps68470 2>/dev/null
+  load intel_skl_int3472_tps68470 intel_skl_int3472_tps68470
+fi
+grep -q '^ipu_bridge ' /proc/modules || load ipu_bridge ipu-bridge
+for m in dw9806b imx241; do grep -q "^$m " /proc/modules || load $m $m; done
+modprobe -q ipu3_cio2
+exit 0

@@ -1,0 +1,12 @@
+[Unit]
+Description=Galaxy TabPro S cameras (TPS68470 board data, IMX241, DW9806B)
+After=systemd-modules-load.service systemd-udev-settle.service
+ConditionPathExists=/usr/local/sbin/w700-camera-load
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/w700-camera-load
+
+[Install]
+WantedBy=multi-user.target

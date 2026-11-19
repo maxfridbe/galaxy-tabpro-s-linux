@@ -1,0 +1,11 @@
+--- a/drivers/media/pci/intel/ipu-bridge.c
++++ b/drivers/media/pci/intel/ipu-bridge.c
+@@ -71,6 +71,8 @@
+ 	IPU_SENSOR_CONFIG("INT347A", 1, 360000000),
+ 	/* Omnivision OV7251 */
+ 	IPU_SENSOR_CONFIG("INT347E", 1, 319200000),
++	/* Sony IMX241 (Samsung Galaxy TabPro S) */
++	IPU_SENSOR_CONFIG("INT347F", 2, 499200000, 249600000),
+ 	/* Hynix Hi-556 */
+ 	IPU_SENSOR_CONFIG("INT3537", 1, 437000000),
+ 	/* Lontium lt6911uxe */

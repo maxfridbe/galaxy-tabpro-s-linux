@@ -1,0 +1,11 @@
+[Unit]
+Description=Re-enable Galaxy TabPro S speakers after resume
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/python3 /usr/local/sbin/w700-speakers
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

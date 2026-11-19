@@ -1,0 +1,402 @@
+]11;#1f0a0aw700acpi: loading out-of-tree module taints kernel.
+w700acpi: \_SB.PCI0.LNK0 _HID str "INT347F"
+w700acpi: \_SB.PCI0.LNK0 _CID str "INT347F"
+w700acpi: \_SB.PCI0.LNK0 _SUB str "SSCamera"
+w700acpi: \_SB.PCI0.LNK0 _DDN str "NSMM4D5"
+w700acpi: \_SB.PCI0.LNK0 _STA int 0xf
+w700acpi: \_SB.PCI0.LNK0 SSDB buf len=108
+w700acpi:   00000000: 00 50 69 56 39 8a f7 11 a9 4e 9c 7d 20 ee 0a b5
+w700acpi:   00000010: ca 40 a3 00 00 00 00 00 03 00 00 00 00 02 00 00
+w700acpi:   00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0a 06
+w700acpi:   00000050: 09 01 02 00 00 01 00 f8 24 01 00 00 00 00 00 00
+w700acpi:   00000060: 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi: \_SB.PCI0.LNK0 _CRS buf len=101
+w700acpi:   00000000: 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a 06 00
+w700acpi:   00000010: 10 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32 43 32
+w700acpi:   00000020: 00 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a 06
+w700acpi:   00000030: 00 0c 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32 43
+w700acpi:   00000040: 32 00 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a
+w700acpi:   00000050: 06 00 58 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32
+w700acpi:   00000060: 43 32 00 79 00
+w700acpi: \_SB.PCI0.LNK0 _PLD pkg count=1
+w700acpi: \_SB.PCI0.LNK0 _PLD buf len=20
+w700acpi:   00000000: 82 00 00 00 00 00 00 00 69 0e 00 00 03 00 00 00
+w700acpi:   00000010: ff ff ff ff
+w700acpi: \_SB.PCI0.LNK0.CLDB missing
+w700acpi: \_SB.PCI0.LNK0 _DEP pkg count=1
+w700acpi: \_SB.PCI0.LNK0 _DEP ref
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f0) buf len=1
+w700acpi:   00000000: 03
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f1) str "NSMM4D5"
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f4) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r1,f1) str "NSMM4D5"
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r1,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(822ace8f,r1,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f0) buf len=1
+w700acpi:   00000000: 03
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f1) buf len=52
+w700acpi:   00000000: 03 00 00 00 00 10 00 02 01 0c 00 02 02 58 00 02
+w700acpi:   00000010: 03 51 00 02 04 52 00 02 05 53 00 02 06 54 00 02
+w700acpi:   00000020: 07 55 00 02 08 56 00 02 09 57 00 02 0a 58 00 02
+w700acpi:   00000030: 00 59 00 02
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r1,f1) buf len=52
+w700acpi:   00000000: 03 00 00 00 00 10 00 02 01 0c 00 02 02 58 00 02
+w700acpi:   00000010: 03 51 00 02 04 52 00 02 05 53 00 02 06 54 00 02
+w700acpi:   00000020: 07 55 00 02 08 56 00 02 09 57 00 02 0a 58 00 02
+w700acpi:   00000030: 00 59 00 02
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r1,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(5815c5c8,r1,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f0) buf len=2
+w700acpi:   00000000: ff 1f
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f1) int 0x3
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f2) int 0x2001000
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f3) int 0x2000c01
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f4) int 0x2005802
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r1,f1) int 0x3
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r1,f2) int 0x2001000
+w700acpi: \_SB.PCI0.LNK0 _DSM(26257549,r1,f3) int 0x2000c01
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f0) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f1) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f4) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r1,f0) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r1,f1) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r1,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK0 _DSM(79234640,r1,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _HID str "INT347F"
+w700acpi: \_SB.PCI0.LNK1 _CID str "INT347F"
+w700acpi: \_SB.PCI0.LNK1 _SUB str "SSCamera"
+w700acpi: \_SB.PCI0.LNK1 _DDN str "CM500RF05SW700"
+w700acpi: \_SB.PCI0.LNK1 _STA int 0xf
+w700acpi: \_SB.PCI0.LNK1 SSDB buf len=108
+w700acpi:   00000000: 00 50 69 56 39 8a f7 11 a9 4e 9c 7d 20 ee 0a b5
+w700acpi:   00000010: ca 40 a3 00 00 00 00 00 03 00 00 00 01 02 00 00
+w700acpi:   00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 09 00
+w700acpi:   00000050: 09 01 02 00 00 01 00 f8 24 01 00 00 00 00 00 00
+w700acpi:   00000060: 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi: \_SB.PCI0.LNK1 _CRS buf len=68
+w700acpi:   00000000: 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a 06 00
+w700acpi:   00000010: 37 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32 43 33
+w700acpi:   00000020: 00 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a 06
+w700acpi:   00000030: 00 51 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32 43
+w700acpi:   00000040: 33 00 79 00
+w700acpi: \_SB.PCI0.LNK1 _PLD pkg count=1
+w700acpi: \_SB.PCI0.LNK1 _PLD buf len=20
+w700acpi:   00000000: 82 00 00 00 00 00 00 00 61 0e 00 00 03 00 00 00
+w700acpi:   00000010: ff ff ff ff
+w700acpi: \_SB.PCI0.LNK1.CLDB missing
+w700acpi: \_SB.PCI0.LNK1 _DEP pkg count=1
+w700acpi: \_SB.PCI0.LNK1 _DEP ref
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f0) buf len=1
+w700acpi:   00000000: 03
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f1) str "CM500RF05SW700"
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f4) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r1,f1) str "CM500RF05SW700"
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r1,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(822ace8f,r1,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f0) buf len=1
+w700acpi:   00000000: 03
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f1) buf len=52
+w700acpi:   00000000: 02 00 00 00 00 37 00 03 02 51 00 03 02 50 00 03
+w700acpi:   00000010: 03 51 00 03 04 52 00 03 05 53 00 03 06 54 00 03
+w700acpi:   00000020: 07 55 00 03 08 56 00 03 09 57 00 03 0a 58 00 03
+w700acpi:   00000030: 0c 59 00 03
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r1,f1) buf len=52
+w700acpi:   00000000: 02 00 00 00 00 37 00 03 02 51 00 03 02 50 00 03
+w700acpi:   00000010: 03 51 00 03 04 52 00 03 05 53 00 03 06 54 00 03
+w700acpi:   00000020: 07 55 00 03 08 56 00 03 09 57 00 03 0a 58 00 03
+w700acpi:   00000030: 0c 59 00 03
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r1,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(5815c5c8,r1,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f0) buf len=2
+w700acpi:   00000000: ff 1f
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f1) int 0x2
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f2) int 0x3003700
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f3) int 0x3005102
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f4) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r1,f1) int 0x2
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r1,f2) int 0x3003700
+w700acpi: \_SB.PCI0.LNK1 _DSM(26257549,r1,f3) int 0x3005102
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f0) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f1) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f3) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f4) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f5) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f6) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f7) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f8) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f9) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f10) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f11) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r0,f12) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r1,f0) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r1,f1) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r1,f2) int 0x0
+w700acpi: \_SB.PCI0.LNK1 _DSM(79234640,r1,f3) int 0x0
+w700acpi: \_SB.PCI0.CLP0 _HID str "INT3472"
+w700acpi: \_SB.PCI0.CLP0 _CID str "INT3472"
+w700acpi: \_SB.PCI0.CLP0._SUB missing
+w700acpi: \_SB.PCI0.CLP0 _DDN str "PMIC-CRDG"
+w700acpi: \_SB.PCI0.CLP0 _STA int 0xf
+w700acpi: \_SB.PCI0.CLP0.SSDB missing
+w700acpi: \_SB.PCI0.CLP0 _CRS buf len=35
+w700acpi:   00000000: 8e 1e 00 01 00 01 02 00 00 01 06 00 80 1a 06 00
+w700acpi:   00000010: 4d 00 5c 5f 53 42 2e 50 43 49 30 2e 49 32 43 32
+w700acpi:   00000020: 00 79 00
+w700acpi: \_SB.PCI0.CLP0 _PLD pkg count=1
+w700acpi: \_SB.PCI0.CLP0 _PLD buf len=20
+w700acpi:   00000000: 82 00 00 00 00 00 00 00 29 0d 00 00 03 00 00 00
+w700acpi:   00000010: ff ff ff ff
+w700acpi: \_SB.PCI0.CLP0 CLDB buf len=32
+w700acpi:   00000000: 00 02 00 50 01 09 01 00 00 00 00 00 00 00 00 00
+w700acpi:   00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi: \_SB.PCI0.CLP0 _DEP pkg count=1
+w700acpi: \_SB.PCI0.CLP0 _DEP ref
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f0) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f1) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r1,f0) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r1,f1) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r1,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(822ace8f,r1,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f0) buf len=1
+w700acpi:   00000000: 03
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f1) buf len=52
+w700acpi:   00000000: 01 00 00 00 0b 4d 00 02 00 00 00 00 00 00 00 00
+w700acpi:   00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000030: 00 00 00 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r1,f1) buf len=52
+w700acpi:   00000000: 01 00 00 00 0b 4d 00 02 00 00 00 00 00 00 00 00
+w700acpi:   00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+w700acpi:   00000030: 00 00 00 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r1,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(5815c5c8,r1,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f0) buf len=1
+w700acpi:   00000000: 07
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f1) int 0x1
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f2) int 0x2004d0b
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r1,f0) buf len=1
+w700acpi:   00000000: 01
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r1,f1) int 0x1
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r1,f2) int 0x2004d0b
+w700acpi: \_SB.PCI0.CLP0 _DSM(26257549,r1,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f0) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f1) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f3) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f4) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f5) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f6) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f7) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f8) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f9) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f10) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f11) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r0,f12) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r1,f0) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r1,f1) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r1,f2) buf len=1
+w700acpi:   00000000: 00
+w700acpi: \_SB.PCI0.CLP0 _DSM(79234640,r1,f3) buf len=1
+w700acpi:   00000000: 00
