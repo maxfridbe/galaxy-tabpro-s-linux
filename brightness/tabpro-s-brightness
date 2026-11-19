@@ -66,17 +66,122 @@ class Panel:
         self._run(self.profile['init'])
         self.level = None
 
+    STEP_TIME = 0.02     # seconds per 1 % step while fading (one step is ~10 ms of AUX writes)
+
     def set_level(self, level):
+        """Fade through every intermediate level so changes look smooth."""
         level = max(0, min(100, level))
-        if level != self.level:
+        if self.level is None:
             self._run(self.profile['levels'][level])
             self.level = level
+            return
+        while self.level != level:
+            t = time.monotonic()
+            self.level += 1 if level > self.level else -1
+            self._run(self.profile['levels'][self.level])
+            time.sleep(max(0, self.STEP_TIME - (time.monotonic() - t)))
 
 
 def read_level():
     cur = int(open(BL + '/brightness').read())
     mx = int(open(BL + '/max_brightness').read()) or 1
     return round(cur * 100 / mx)
+
+
+# --- automatic brightness ------------------------------------------------------------------------
+# lux -> percent. Above 1 lx this is Windows' curve from the ALS1 ACPI _DSM; below it a flat floor,
+# so a dark room does not make the screen hunt. Override in /etc/tabpro-s/brightness.conf.
+CONF = '/etc/tabpro-s/brightness.conf'
+DEFAULTS = {
+    'auto': 'yes',
+    'floor_lux': '1', 'floor_percent': '10',
+    'curve': '1:22 3:32 6:40 10:50 19:60 37:70 71:80 136:90 260:100',
+    'step': '5',            # minimum change (percentage points) before adjusting
+}
+
+
+def load_conf():
+    c = dict(DEFAULTS)
+    try:
+        for line in open(CONF):
+            line = line.split('#', 1)[0].strip()
+            if '=' in line:
+                k, v = (x.strip() for x in line.split('=', 1))
+                c[k] = v
+    except OSError:
+        pass
+    return c
+
+
+def find_als():
+    for d in glob.glob('/sys/bus/iio/devices/iio:device*'):
+        try:
+            if open(d + '/name').read().strip() == 'bh1730':
+                return d + '/in_illuminance_input'
+        except OSError:
+            pass
+    return None
+
+
+def lux_to_percent(lux, conf):
+    import math
+    floor_lux, floor_pct = float(conf['floor_lux']), float(conf['floor_percent'])
+    if lux <= floor_lux:
+        return floor_pct
+    pts = [(floor_lux, floor_pct)] + [(float(a), float(b)) for a, b in
+                                      (p.split(':') for p in conf['curve'].split())
+                                      if float(a) > floor_lux]
+    for (l0, p0), (l1, p1) in zip(pts, pts[1:]):
+        if lux <= l1:
+            f = (math.log(lux) - math.log(l0)) / (math.log(l1) - math.log(l0))
+            return p0 + f * (p1 - p0)
+    return pts[-1][1]
+
+
+class Auto:
+    """Smoothed lux -> target percent; writes intel_backlight so GNOME's slider follows."""
+    PERIOD = 1.0
+
+    def __init__(self, conf):
+        self.conf = conf
+        self.als = find_als()
+        self.lux = None          # smoothed
+        self.target = None
+        self.written = None      # last value we wrote to intel_backlight
+        self.manual_lux = None   # lux when the user last moved the slider (auto paused)
+        self.next = 0
+
+    def enabled(self):
+        return self.conf['auto'].lower() in ('1', 'yes', 'true', 'on') and self.als
+
+    def user_changed(self, raw):
+        if self.written is not None and raw != self.written and self.lux is not None:
+            self.manual_lux = self.lux
+            self.written = None
+
+    def tick(self):
+        if not self.enabled() or time.monotonic() < self.next:
+            return
+        self.next = time.monotonic() + self.PERIOD
+        try:
+            lux = float(open(self.als).read())
+        except (OSError, ValueError):
+            return
+        self.lux = lux if self.lux is None else self.lux + 0.3 * (lux - self.lux)   # ~3 s smoothing
+        if self.manual_lux is not None:
+            ratio = (self.lux + 0.05) / (self.manual_lux + 0.05)
+            if 0.5 < ratio < 2:
+                return               # room light unchanged: keep the user's choice
+            self.manual_lux = None
+        want = lux_to_percent(self.lux, self.conf)
+        if self.target is not None and abs(want - self.target) < float(self.conf['step']) \
+                and self.written is not None:
+            return
+        self.target = want
+        mx = int(open(BL + '/max_brightness').read())
+        self.written = max(1, round(want * mx / 100))      # the panel fades to it (Panel.set_level)
+        with open(BL + '/brightness', 'w') as f:
+            f.write(str(self.written))
 
 
 def inotify_fd(path):
@@ -98,10 +203,12 @@ def main():
     panel.set_level(read_level())
     log(f'AMOLED brightness active, level {panel.level}')
     ino = inotify_fd(BL + '/brightness')
+    auto = Auto(load_conf())
+    log('automatic brightness', 'on' if auto.enabled() else 'off')
     last_check = time.monotonic()
     while True:
         if ino is not None:
-            r, _, _ = select.select([ino], [], [], CHECK_INTERVAL)
+            r, _, _ = select.select([ino], [], [], Auto.PERIOD if auto.enabled() else CHECK_INTERVAL)
             if r:
                 try:
                     os.read(ino, 4096)
@@ -116,6 +223,9 @@ def main():
                     log('TCON reset detected, re-initialising')
                     time.sleep(0.5)
                     panel.init()
+            if auto.enabled():
+                auto.user_changed(int(open(BL + '/brightness').read()))
+                auto.tick()
             panel.set_level(read_level())
         except OSError as e:                   # AUX unavailable while the panel is off
             log('AUX error:', e)
