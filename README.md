@@ -1,5 +1,9 @@
 # Linux on the Samsung Galaxy TabPro S (SM-W700)
 
+> **Kernel bug:** [Bug 188411 – No speaker output on Samsung Tabpro S](https://bugzilla.kernel.org/show_bug.cgi?id=188411)
+> (open since 2016). Root cause and a working fix are documented here:
+> [docs/02-audio-speakers.md](docs/02-audio-speakers.md).
+
 Everything needed to run Linux — tested on **Fedora Silverblue 45** — on the 2016 Samsung Galaxy
 TabPro S (model **SM-W700**, Intel Core m3-6Y30 "Skylake", 4 GB RAM, 12" AMOLED), including fixes
 for the two things that have never worked on Linux on this tablet:
@@ -16,7 +20,7 @@ real hardware.
 |---|---|---|
 | Display, GPU (Intel HD 515) | ✅ works out of the box | |
 | Wi-Fi (Qualcomm Atheros QCA6174, ath10k) | ✅ out of the box | |
-| Bluetooth (QCA61x4) | ❓ untested | |
+| Bluetooth (QCA61x4) | ✅ works (discovers devices) | |
 | Touchscreen (Synaptics I2C-HID `SYNP1234`) | ✅ out of the box | |
 | Keyboard cover | ❓ untested on Linux | a USB keyboard works (needed once for Secure Boot key enrollment) |
 | Suspend (s2idle) / resume | ✅ works | power button wakes it |
