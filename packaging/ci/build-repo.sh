@@ -62,7 +62,11 @@ if [ -n "${RPM_GPG_PRIVATE_KEY:-}" ]; then
   export GNUPGHOME="$(mktemp -d)"
   echo "$RPM_GPG_PRIVATE_KEY" | gpg --batch --import 2>/dev/null
   KEYID="$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')"
-  printf '%%_gpg_name %s\n%%__gpg_sign_cmd %%{__gpg} gpg --batch --no-armor --pinentry-mode loopback --passphrase "" -u "%%{_gpg_name}" -sbo %%{__signature_filename} --digest-algo sha256 %%{__plaintext_filename}\n' "$KEYID" > ~/.rpmmacros
+  cat > ~/.rpmmacros <<MACROS
+%_openpgp_sign_id $KEYID
+%_gpg_name $KEYID
+%_gpg_sign_cmd_extra_args --batch --pinentry-mode loopback --passphrase ""
+MACROS
   rpmsign --addsign "$ARCHDIR"/*.rpm >/dev/null
   gpg --armor --export "$KEYID" > "$OUT/RPM-GPG-KEY-tabpro-s"
 fi
