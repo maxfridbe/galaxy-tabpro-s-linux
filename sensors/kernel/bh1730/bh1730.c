@@ -2,13 +2,20 @@
 /*
  * ROHM BH1730FVC ambient light sensor (Samsung Galaxy TabPro S, ACPI TOBH1733).
  *
- * Continuous measurement, automatic gain (x1/x2/x64/x128), lux per the datasheet formula.
- * Exposes in_illuminance_input (lux) and the raw visible+IR / IR channels.
+ * The sensor measures continuously; reads return the latest completed conversion without
+ * sleeping, so pollers such as iio-sensor-proxy are never blocked. Gain (x1/x2/x64/x128) and
+ * integration time (102.6 ms / 688.5 ms) are adjusted automatically: in dim light the long
+ * integration gives ~7x more counts and far less jitter.
+ *
+ * Lux uses the coefficients the TabPro S firmware provides (ACPI _DSM of ALS1, identical to the
+ * defaults of ROHM's Windows driver). They compensate for the dark cover glass and are ~3.5x the
+ * bare-sensor datasheet values:  lux = (c0*DATA0 - c1*DATA1) * 100 / (gain * t_int[ms])
  */
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 
@@ -26,17 +33,31 @@
 #define BH1730_CTRL_ADC_EN		BIT(1)
 #define BH1730_CTRL_POWER		BIT(0)
 
-#define BH1730_ITIME			0xda	/* 38 cycles: 102.6 ms */
-#define BH1730_ITIME_US			(2699 * (256 - BH1730_ITIME))
+#define BH1730_CYCLE_US			2700
 #define BH1730_SATURATION		60000
-#define BH1730_TOO_DARK			200
+#define BH1730_TOO_DARK			1000	/* counts: step up sensitivity below this */
+#define BH1730_TOO_BRIGHT_LONG		30000	/* counts: leave long integration above this */
 
 static const int bh1730_gains[] = { 1, 2, 64, 128 };	/* GAIN register values 0..3 */
+static u8 bh1730_itimes[] = { 0xda, 0x01 };	/* 38 cycles = 102.6 ms, 255 = 688.5 ms (0x00 reads 0) */
+module_param_named(long_itime, bh1730_itimes[1], byte, 0644);
+MODULE_PARM_DESC(long_itime, "TIMING register value for dim light");
+
+/* firmware coefficients (x1000): DATA1/DATA0 ratio limit, c0, c1 */
+static const struct { int ratio, c0, c1; } bh1730_coef[] = {
+	{  558, 4478, 5816 },
+	{  697, 3674, 4376 },
+	{  777, 1858, 1770 },
+	{ 3000,  652,  217 },
+};
 
 struct bh1730 {
 	struct i2c_client *client;
-	struct mutex lock;	/* serialises measurements and gain changes */
-	int gain_idx;
+	struct mutex lock;	/* serialises register access and the cached state */
+	int gain_idx, time_idx;
+	unsigned long valid_from;	/* jiffies: data with the current settings available */
+	bool have_data;
+	int d0, d1, data_gain, data_time;	/* last good conversion and its settings */
 };
 
 static int bh1730_write(struct bh1730 *b, u8 reg, u8 val)
@@ -49,114 +70,156 @@ static int bh1730_read(struct bh1730 *b, u8 reg)
 	return i2c_smbus_read_byte_data(b->client, BH1730_CMD | reg);
 }
 
-static int bh1730_set_gain(struct bh1730 *b, int idx)
+static int bh1730_itime_us(int time_idx)
 {
-	int ret = bh1730_write(b, BH1730_REG_GAIN, idx);
-
-	if (!ret)
-		b->gain_idx = idx;
-	return ret;
+	return BH1730_CYCLE_US * (256 - bh1730_itimes[time_idx]);
 }
 
-/* Wait for a fresh conversion (one full integration period) and read both channels. */
-static int bh1730_measure(struct bh1730 *b, int *d0, int *d1)
+static int bh1730_apply(struct bh1730 *b, int gain_idx, int time_idx)
 {
-	int ret, i;
+	int ret = bh1730_write(b, BH1730_REG_GAIN, gain_idx);
 
-	/* discard the conversion started with the old settings */
-	usleep_range(BH1730_ITIME_US + 5000, BH1730_ITIME_US + 10000);
-	for (i = 0; i < 20; i++) {
-		ret = bh1730_read(b, BH1730_REG_CONTROL);
-		if (ret < 0)
-			return ret;
-		if (ret & BH1730_CTRL_ADC_VALID)
-			break;
-		usleep_range(10000, 12000);
+	if (!ret)
+		ret = bh1730_write(b, BH1730_REG_TIMING, bh1730_itimes[time_idx]);
+	if (ret)
+		return ret;
+	b->gain_idx = gain_idx;
+	b->time_idx = time_idx;
+	/* the running conversion still uses the old settings: wait for the next full one */
+	b->valid_from = jiffies + usecs_to_jiffies(2 * bh1730_itime_us(time_idx) + 10000);
+	return 0;
+}
+
+/* Pick the next more/less sensitive setting; returns false if already at the limit. */
+static bool bh1730_next(struct bh1730 *b, int d0, int d1, int *g, int *t)
+{
+	*g = b->gain_idx;
+	*t = b->time_idx;
+	if (d0 >= BH1730_SATURATION || d1 >= BH1730_SATURATION) {
+		if (*t > 0)
+			(*t)--;
+		else if (*g > 0)
+			(*g)--;
+		else
+			return false;
+	} else if (*t > 0 && d0 > BH1730_TOO_BRIGHT_LONG) {
+		(*t)--;
+	} else if (d0 < BH1730_TOO_DARK) {
+		if (*g < ARRAY_SIZE(bh1730_gains) - 1)
+			(*g)++;
+		else if (*t < ARRAY_SIZE(bh1730_itimes) - 1)
+			(*t)++;
+		else
+			return false;
+	} else {
+		return false;
 	}
+	return true;
+}
+
+/* Fetch the latest conversion if one with the current settings is ready; adjust range. */
+static int bh1730_update(struct bh1730 *b)
+{
+	int ret, d0, d1, g, t;
+
+	if (time_before(jiffies, b->valid_from))
+		return 0;
+	ret = bh1730_read(b, BH1730_REG_CONTROL);
+	if (ret < 0)
+		return ret;
+	if (!(ret & BH1730_CTRL_ADC_VALID))
+		return 0;
 	ret = i2c_smbus_read_word_data(b->client, BH1730_CMD | BH1730_REG_DATA0);
 	if (ret < 0)
 		return ret;
-	*d0 = ret;
+	d0 = ret;
 	ret = i2c_smbus_read_word_data(b->client, BH1730_CMD | BH1730_REG_DATA1);
 	if (ret < 0)
 		return ret;
-	*d1 = ret;
+	d1 = ret;
+
+	/* keep a saturated reading only if nothing better is possible */
+	if (bh1730_next(b, d0, d1, &g, &t)) {
+		if ((d0 < BH1730_SATURATION && d1 < BH1730_SATURATION) || !b->have_data) {
+			b->d0 = d0; b->d1 = d1;
+			b->data_gain = bh1730_gains[b->gain_idx];
+			b->data_time = bh1730_itime_us(b->time_idx);
+			b->have_data = true;
+		}
+		return bh1730_apply(b, g, t);
+	}
+	b->d0 = d0; b->d1 = d1;
+	b->data_gain = bh1730_gains[b->gain_idx];
+	b->data_time = bh1730_itime_us(b->time_idx);
+	b->have_data = true;
 	return 0;
 }
 
-/* Measure with automatic gain selection. */
-static int bh1730_measure_auto(struct bh1730 *b, int *d0, int *d1)
+static s64 bh1730_mlux(struct bh1730 *b)
 {
-	int ret, tries;
+	s64 v;
+	int i;
 
-	for (tries = 0; tries < 4; tries++) {
-		ret = bh1730_measure(b, d0, d1);
-		if (ret)
-			return ret;
-		if ((*d0 >= BH1730_SATURATION || *d1 >= BH1730_SATURATION) && b->gain_idx > 0)
-			ret = bh1730_set_gain(b, b->gain_idx - 1);
-		else if (*d0 < BH1730_TOO_DARK && b->gain_idx < ARRAY_SIZE(bh1730_gains) - 1)
-			ret = bh1730_set_gain(b, b->gain_idx + 1);
-		else
-			return 0;
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
-
-/* Datasheet lux formula, result in milli-lux. */
-static s64 bh1730_mlux(int d0, int d1, int gain)
-{
-	s64 c0, c1, v;
-
-	if (!d0)
+	if (!b->d0)
 		return 0;
-	if (1000LL * d1 < 260LL * d0) {
-		c0 = 1290; c1 = 2733;
-	} else if (1000LL * d1 < 550LL * d0) {
-		c0 = 795; c1 = 859;
-	} else if (1000LL * d1 < 1090LL * d0) {
-		c0 = 510; c1 = 345;
-	} else if (1000LL * d1 < 2130LL * d0) {
-		c0 = 276; c1 = 130;
-	} else {
+	for (i = 0; i < ARRAY_SIZE(bh1730_coef); i++)
+		if (1000LL * b->d1 < (s64)bh1730_coef[i].ratio * b->d0)
+			break;
+	if (i == ARRAY_SIZE(bh1730_coef))
 		return 0;
-	}
-	v = c0 * d0 - c1 * d1;		/* x1000 */
+	v = (s64)bh1730_coef[i].c0 * b->d0 - (s64)bh1730_coef[i].c1 * b->d1;	/* x1000 */
 	if (v < 0)
 		return 0;
-	/* lx = v/1000 / gain * 102.6 ms / itime  ->  mlx = v * 102600 / (gain * itime_us) */
-	return div64_s64(v * 102600, (s64)gain * BH1730_ITIME_US);
+	/* mlx = v/1000 * 100 / (gain * t_ms) * 1000 = v * 100000 / (gain * t_us) */
+	return div64_s64(v * 100000, (s64)b->data_gain * b->data_time);
 }
 
 static int bh1730_read_raw(struct iio_dev *indio_dev, struct iio_chan_spec const *chan,
 			   int *val, int *val2, long mask)
 {
 	struct bh1730 *b = iio_priv(indio_dev);
-	int d0, d1, ret;
+	int ret, tries;
 	s64 mlux;
 
 	mutex_lock(&b->lock);
-	ret = bh1730_measure_auto(b, &d0, &d1);
-	mutex_unlock(&b->lock);
-	if (ret)
+	ret = bh1730_update(b);
+	/* first read after probe: wait for a conversion once */
+	for (tries = 0; !ret && !b->have_data && tries < 10; tries++) {
+		msleep(DIV_ROUND_UP(bh1730_itime_us(b->time_idx), 1000) + 5);
+		ret = bh1730_update(b);
+	}
+	if (!ret && !b->have_data)
+		ret = -EAGAIN;
+	if (ret) {
+		mutex_unlock(&b->lock);
 		return ret;
+	}
 
 	switch (mask) {
 	case IIO_CHAN_INFO_PROCESSED:
-		mlux = bh1730_mlux(d0, d1, bh1730_gains[b->gain_idx]);
+		mlux = bh1730_mlux(b);
 		*val = div_s64(mlux, 1000);
 		*val2 = (mlux - (s64)*val * 1000) * 1000;
-		return IIO_VAL_INT_PLUS_MICRO;
+		ret = IIO_VAL_INT_PLUS_MICRO;
+		break;
 	case IIO_CHAN_INFO_RAW:
-		*val = chan->channel2 == IIO_MOD_LIGHT_IR ? d1 : d0;
-		return IIO_VAL_INT;
+		*val = chan->channel2 == IIO_MOD_LIGHT_IR ? b->d1 : b->d0;
+		ret = IIO_VAL_INT;
+		break;
 	case IIO_CHAN_INFO_HARDWAREGAIN:
-		*val = bh1730_gains[b->gain_idx];
-		return IIO_VAL_INT;
+		*val = b->data_gain;
+		ret = IIO_VAL_INT;
+		break;
+	case IIO_CHAN_INFO_INT_TIME:
+		*val = 0;
+		*val2 = b->data_time;
+		ret = IIO_VAL_INT_PLUS_MICRO;
+		break;
+	default:
+		ret = -EINVAL;
 	}
-	return -EINVAL;
+	mutex_unlock(&b->lock);
+	return ret;
 }
 
 static const struct iio_info bh1730_info = {
@@ -173,14 +236,16 @@ static const struct iio_chan_spec bh1730_channels[] = {
 		.modified = 1,
 		.channel2 = IIO_MOD_LIGHT_BOTH,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_HARDWAREGAIN),
+		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_HARDWAREGAIN) |
+					    BIT(IIO_CHAN_INFO_INT_TIME),
 	},
 	{
 		.type = IIO_INTENSITY,
 		.modified = 1,
 		.channel2 = IIO_MOD_LIGHT_IR,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_HARDWAREGAIN),
+		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_HARDWAREGAIN) |
+					    BIT(IIO_CHAN_INFO_INT_TIME),
 	},
 };
 
@@ -212,13 +277,12 @@ static int bh1730_probe(struct i2c_client *client)
 	if ((ret & 0xf0) != 0x70)
 		return dev_err_probe(&client->dev, -ENODEV, "unexpected part id 0x%02x\n", ret);
 
-	ret = bh1730_write(b, BH1730_REG_TIMING, BH1730_ITIME);
-	if (!ret)
-		ret = bh1730_set_gain(b, 2);	/* start at x64, auto-ranged per read */
+	ret = bh1730_apply(b, 2, 0);		/* x64, 102.6 ms; auto-ranged from here */
 	if (!ret)
 		ret = bh1730_write(b, BH1730_REG_CONTROL, BH1730_CTRL_POWER | BH1730_CTRL_ADC_EN);
 	if (ret)
 		return dev_err_probe(&client->dev, ret, "cannot configure sensor\n");
+	b->valid_from = jiffies + usecs_to_jiffies(bh1730_itime_us(0) + 10000);
 	ret = devm_add_action_or_reset(&client->dev, bh1730_power_off, b);
 	if (ret)
 		return ret;
