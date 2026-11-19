@@ -1,0 +1,127 @@
+#!/usr/bin/python3
+"""Samsung Galaxy TabPro S (W700) AMOLED brightness daemon.
+
+The panel (Samsung SDC A029 behind a Parade eDP TCON) ignores the PWM backlight and the VESA DPCD
+brightness registers. Windows' SAMOPanel.sys instead unlocks the TCON's vendor register window
+(DPCD 0x490 <- "PARAAUX-REG"), runs a panel init, and for each brightness level writes a set of
+bank/register/data triplets through DPCD 0x491..0x493 (AMOLED gamma/AID commands).
+
+This daemon replays those writes from a per-panel profile (/etc/tabpro-s/amoled-profile.json):
+it follows /sys/class/backlight/intel_backlight/brightness (written by GNOME's slider and keys)
+and re-applies after the TCON resets (suspend, screen off), detected by the unlock flag at 0x490.
+"""
+import ctypes, glob, json, os, select, struct, sys, time
+
+PROFILE = os.environ.get('TABPRO_S_AMOLED_PROFILE', '/etc/tabpro-s/amoled-profile.json')
+BL = '/sys/class/backlight/intel_backlight'
+UNLOCK_KEY = b'PARAAUX-REG'
+CHECK_INTERVAL = 3.0
+
+
+def log(*a):
+    print(*a, file=sys.stderr, flush=True)
+
+
+def find_aux():
+    for d in sorted(glob.glob('/sys/class/drm_dp_aux_dev/drm_dp_aux*')):
+        name = open(d + '/name').read()
+        if 'AUX A' in name or 'eDP' in name:
+            return '/dev/' + os.path.basename(d)
+    raise SystemExit('no eDP AUX channel found')
+
+
+class Panel:
+    def __init__(self, dev, profile):
+        self.fd = os.open(dev, os.O_RDWR)
+        self.profile = profile
+        self.level = None
+
+    def _run(self, ops):
+        for op in ops:
+            if op[0] == 'W':
+                os.pwrite(self.fd, bytes.fromhex(op[2]), op[1])
+            elif op[0] == 'R':
+                os.pread(self.fd, op[2], op[1])
+            elif op[0] == 'S':
+                time.sleep(op[1] / 1e6)
+
+    def unlocked(self):
+        try:
+            return os.pread(self.fd, 1, 0x490) == b'\x01'
+        except OSError:
+            return False
+
+    def unlock(self):
+        for c in UNLOCK_KEY:
+            os.pwrite(self.fd, bytes([c]), 0x490)
+        return self.unlocked()
+
+    def init(self):
+        for attempt in range(5):
+            if self.unlock():
+                break
+            time.sleep(0.2)
+        else:
+            raise OSError('TCON did not unlock')
+        self._run(self.profile['init'])
+        self.level = None
+
+    def set_level(self, level):
+        level = max(0, min(100, level))
+        if level != self.level:
+            self._run(self.profile['levels'][level])
+            self.level = level
+
+
+def read_level():
+    cur = int(open(BL + '/brightness').read())
+    mx = int(open(BL + '/max_brightness').read()) or 1
+    return round(cur * 100 / mx)
+
+
+def inotify_fd(path):
+    libc = ctypes.CDLL(None, use_errno=True)
+    fd = libc.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+    if fd < 0 or libc.inotify_add_watch(fd, path.encode(), 0x2 | 0x8) < 0:  # IN_MODIFY | IN_CLOSE_WRITE
+        return None
+    return fd
+
+
+def main():
+    profile = json.load(open(PROFILE))
+    if len(profile.get('levels', [])) != 101:
+        raise SystemExit('profile must contain 101 levels')
+    panel = Panel(find_aux(), profile)
+    if len(sys.argv) > 1:                      # one-shot: tabpro-s-brightness <0-100>
+        panel.init(); panel.set_level(int(sys.argv[1])); return
+    panel.init()
+    panel.set_level(read_level())
+    log(f'AMOLED brightness active, level {panel.level}')
+    ino = inotify_fd(BL + '/brightness')
+    last_check = time.monotonic()
+    while True:
+        if ino is not None:
+            r, _, _ = select.select([ino], [], [], CHECK_INTERVAL)
+            if r:
+                try:
+                    os.read(ino, 4096)
+                except BlockingIOError:
+                    pass
+        else:
+            time.sleep(0.25)
+        try:
+            if time.monotonic() - last_check >= CHECK_INTERVAL:
+                last_check = time.monotonic()
+                if not panel.unlocked():
+                    log('TCON reset detected, re-initialising')
+                    time.sleep(0.5)
+                    panel.init()
+            panel.set_level(read_level())
+        except OSError as e:                   # AUX unavailable while the panel is off
+            log('AUX error:', e)
+            panel.level = None
+            time.sleep(1)
+
+
+if __name__ == '__main__':
+    main()

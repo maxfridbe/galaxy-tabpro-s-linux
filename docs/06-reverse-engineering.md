@@ -72,3 +72,6 @@ Python deps: `capstone pefile unicorn` (`python -m venv v && v/bin/pip install c
 * On Silverblue, `insmod` from `/usr/local` is denied by SELinux unless labelled `modules_object_t`,
   and the initramfs already loaded the stock PMIC module.
 * MokManager needs a physical keyboard and times out quickly.
+
+## Screen brightness
+See [12-brightness.md](12-brightness.md): `SAMOPanel.sys` interface table via `\Callback\IGD_PanelDriverShareObj`, emulated with `re/emusamo.py`, AUX accesses forwarded live to the panel to capture its calibration.

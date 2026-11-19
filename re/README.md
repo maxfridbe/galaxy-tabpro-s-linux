@@ -11,6 +11,8 @@ See [docs/06-reverse-engineering.md](../docs/06-reverse-engineering.md) for the 
 | `scan.py`, `probe.py`, `ident.py`, `dump8.py` | bridge bus scan / register dumps (read-only) |
 | `pins.py`, `stereo.py` | pin routing / amp channel experiments |
 | `micsweep.py`, `miccheck.py`, `micvol.py` | speaker→mic loopback measurements |
+| `emusamo.py` | emulation of `SAMOPanel.sys` (AMOLED panel driver); can forward AUX accesses to the real panel |
+| `samo-profile.py`, `auxsrv.py` | generate the per-panel brightness profile (docs/12) |
 | `regbin.py` | extract ACPI tables from a `HKLM\HARDWARE` `.reg` export |
 | `w700acpi.c` | kernel module printing camera ACPI method results |
 | `data/imx241-tables.txt` | IMX241 register tables from `imx241.sys` |

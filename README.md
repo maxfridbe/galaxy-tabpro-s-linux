@@ -10,8 +10,10 @@ for the two things that have never worked on Linux on this tablet:
 
 * **internal speakers** — silent on Linux since 2016 ([kernel bug 188411](https://bugzilla.kernel.org/show_bug.cgi?id=188411))
 * **both cameras** — no driver for the sensor, no power-up data for the camera PMIC
+* **screen brightness** — the AMOLED ignores every standard backlight control; it needs an unlock
+  key and Samsung's gamma commands to the Parade timing controller
 
-Both were reverse-engineered from the Windows drivers (without redistributing them) and verified on
+All of these were reverse-engineered from the Windows drivers (without redistributing them) and verified on
 real hardware.
 
 ## Status
@@ -19,6 +21,7 @@ real hardware.
 | Hardware | Status | Notes |
 |---|---|---|
 | Display, GPU (Intel HD 515) | ✅ works out of the box | |
+| **Screen brightness** (AMOLED, Parade TCON) | ✅ **with [`brightness/`](brightness/)** | real panel brightness via Samsung's TCON commands; per-unit profile — [docs/12](docs/12-brightness.md) |
 | Wi-Fi (Qualcomm Atheros QCA6174, ath10k) | ✅ out of the box | |
 | Bluetooth (QCA61x4) | ✅ works (discovers devices) | |
 | Touchscreen (Synaptics I2C-HID `SYNP1234`) | ✅ out of the box | |
@@ -88,10 +91,13 @@ Packages are rebuilt daily for the newest Fedora kernels and signed (key `380F78
 | [08 – Power, suspend, misc](docs/08-power-and-misc.md) | suspend, power button, tuned, sleep settings |
 | [09 – Upstreaming](docs/09-upstreaming.md) | what it takes to get this into the kernel / libcamera |
 | [10 – Other distributions](docs/10-other-distros.md) | Fedora Workstation, Ubuntu, Arch: DKMS etc. |
+| [11 – RPM packages](docs/11-packages.md) | the signed dnf repo, CI, Secure Boot handling |
+| [12 – Screen brightness](docs/12-brightness.md) | why the slider did nothing, the Parade TCON unlock, profile generation |
 
 ## Repository layout
 
 ```
+brightness/     AMOLED brightness daemon + systemd unit (needs a per-panel profile, docs/12)
 audio/          speaker fix: w700-speakers (Python, no deps), systemd units, install.sh
 camera/
   kernel/       imx241 (new), dw9806b (new), int3472 tps68470 + board data, ipu-bridge + INT347F

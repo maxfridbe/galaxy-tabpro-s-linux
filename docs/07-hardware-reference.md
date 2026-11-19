@@ -38,3 +38,11 @@ See [04-camera.md](04-camera.md). Summary:
 ## Other ACPI devices of note
 `SAM0101` (Samsung AMOLED panel helper), `SAM0602` (Samsung "MLDR" loader), `SPNL0001`,
 `SECM0001`, `USBC000` (Type-C), `INT33A1`/PEP for s2idle (LPIT present).
+
+## Display panel
+| | |
+|---|---|
+| Panel | Samsung SDC A029, 2160×1440 AMOLED, eDP |
+| TCON | Parade (DPCD OUI `00-1C-F8`), vendor window `0x490` unlock (`PARAAUX-REG`), `0x491` bank, `0x492` reg, `0x493` data |
+| Windows driver | `SAMOPanel.sys`, ACPI `SAM0101` (`_SUB C135144D`) |
+| Brightness | see [12-brightness.md](12-brightness.md) |
