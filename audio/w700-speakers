@@ -4,11 +4,13 @@
 
 Codec: Realtek ALC298 (HDA subsystem 144d:c135). The speakers are driven by two
 Maxim MAX98925 smart amps on the codec's internal bus bridge (7-bit addr 0x31, 0x34).
-Linux never powers up the codec's internal I2S block (bridge device 0x1b) nor sets the
-amps' GLOBAL_ENABLE, so the speakers stay silent.
+Linux never configures them, so the speakers stay silent.
 
-This replays the Windows RTKVHD64.sys playback power-up for device 0x1b (function
-0x39ee78, extracted by emulation) and then enables both amps (MAX98925 reg 0x38 = 0x80).
+This writes the amp register table that Windows' RTKVHD64.sys programs at driver start
+(recorded from the real chip by running the Windows driver in a VM whose codec verbs were
+forwarded to the tablet), with Linux's own stereo slot selection and gain, then enables the
+amps (reg 0x38 = 0x80). The amps keep this until they lose power (flat battery), so it is
+written on every boot and resume.
 Bridge protocol (ALC298 vendor coefs on NID 0x20): 0x22 addr, 0x23 reg, 0x25 data,
 0x26 cmd/status (bit14 busy), 0x28 read data, 0x89 reg-hi. Commands: 0xb010/0xb018 8-bit
 reg+data write/read, 0xb013/0xb01b 16-bit reg+data write/read.
@@ -35,40 +37,22 @@ def r8(dev, reg):
     _wait(); _start(); coef_w(0x22, dev); coef_w(0x23, reg); coef_w(0x26, 0xb018); _wait(); time.sleep(0.002)
     return coef_r(0x28) & 0xff
 
-POWERUP_1B = [
-    ('w', 0x0111, 0xa502),
-    ('w', 0x013a, 0x3030),
-    ('w', 0x006e, 0xef00),
-    ('w', 0x006f, 0xef00),
-    ('w', 0x0070, 0x8020),
-    ('w', 0x00fa, 0x8001),
-    ('w', 0x0073, 0x0000),
-    ('w', 0x0125, 0x0120),
-    ('w', 0x0091, 0x0c16),
-    ('w', 0x0063, 0xa23e),
-    ('s', 20, 0),
-    ('w', 0x0063, 0xf23e),
-    ('w', 0x0061, 0x8080),
-    ('w', 0x008e, 0x0009),
-    ('w', 0x0061, 0x8c80),
-    ('w', 0x0125, 0x0120),
-    ('s', 20, 0),
-    ('w', 0x0091, 0x0e16),
-    ('s', 20, 0),
-    ('w', 0x0125, 0x0420),
-    ('w', 0x0062, 0x0400),
-    ('w', 0x0002, 0x0000),
-    ('w', 0x0091, 0x0e1e),
-    ('w', 0x0161, 0x0041),
-    ('w', 0x0162, 0x040c),
-    ('w', 0x0160, 0x8ec0),
-    ('w', 0x008e, 0x0019),
-    ('w', 0x0015, 0xa8f0),
-    ('w', 0x0015, 0xa8f9),
-    ('w', 0x0094, 0x0180),
-    ('w', 0x00fb, 0x3000),
-]
 AMPS = (0x31, 0x34)          # left, right (verified by listening test)
+# MAX98925 register table as Windows programs it (0x2d, gain/input select, is set separately).
+# The essential differences from the chip's power-on state: DAI clock/format (0x1a, 0x1b, 0x1f,
+# 0x20), TDM slots and V/I-sense output (0x21-0x23), DOUT drive (0x27-0x2a), filters (0x2c),
+# speaker mode (0x2f), ALC (0x34), boost limiter (0x3a). Without them the amps stay silent.
+AMP_TABLE = (
+    (0x0b, 0x00), (0x0c, 0x00), (0x0d, 0x00),             # IRQ enables
+    (0x1a, 0x40), (0x1b, 0x86), (0x1f, 0x04),             # DAI clock: BCLK source, 48 kHz
+    (0x20, 0x51), (0x21, 0x08),                           # format (16-bit TDM), slot select
+    (0x22, 0x20), (0x23, 0x24), (0x24, 0x00), (0x26, 0x00),  # DOUT VMON/IMON slots
+    (0x27, 0x00), (0x28, 0x00), (0x29, 0x00), (0x2a, 0x00),  # DOUT Hi-Z off
+    (0x2b, 0x02), (0x2c, 0x10), (0x2e, 0x02), (0x2f, 0x02),  # drive, filters, ramp, spk mode
+    (0x30, 0x0a), (0x31, 0x00), (0x32, 0x00), (0x33, 0x00),  # ALC threshold/attack/release
+    (0x34, 0x12), (0x35, 0x01), (0x36, 0x90), (0x37, 0x00),  # ALC cfg, boost, block enable
+    (0x39, 0x00), (0x3a, 0xf0),                           # boost limiter
+)
 CONFS = ('/etc/tabpro-s/speakers.conf', '/etc/w700-speakers.conf')  # GAIN=<0..31> (dB = GAIN-6; fw default 25)
 TUNED_SRC = '/usr/lib/tuned/profiles'
 TUNED_DST = '/etc/tuned/profiles'
@@ -131,15 +115,14 @@ def main():
     keep_codec_awake()
     if r8(0x31, 0xff) not in (0x51, 0x80):
         print("w700-speakers: MAX98925 not found at 0x31; doing nothing"); return 1
-    for op, a, b in POWERUP_1B:
-        if op == 'w': w16(0x1b, a, b)
-        else: time.sleep(a / 1000)
     gain = load_gain()
     for ch, d in enumerate(AMPS):
+        w8(d, 0x38, 0x00)                             # disable while configuring
+        for r, v in AMP_TABLE: w8(d, r, v)
         for r in (0x0e, 0x0f, 0x10): w8(d, r, 0xff)   # clear latched IRQ flags
         w8(d, 0x2d, (ch << 5) | gain)                 # GAIN: DAC_IN_SEL left/right DAI + SPK_GAIN
         w8(d, 0x38, 0x80)                             # MAX98925 GLOBAL_ENABLE
-    st = [f"{d:#04x}:en={r8(d, 0x38):#04x},gain={r8(d, 0x2d):#04x}" for d in AMPS]
+    st = [f"{d:#04x}:en={r8(d, 0x38):#04x},gain={r8(d, 0x2d):#04x},fmt={r8(d, 0x20):#04x}" for d in AMPS]
     print("w700-speakers: enabled", " ".join(st))
     return 0
 

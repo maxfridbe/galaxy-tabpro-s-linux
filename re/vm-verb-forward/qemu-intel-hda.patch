@@ -1,0 +1,33 @@
+diff --git a/hw/audio/intel-hda.c b/hw/audio/intel-hda.c
+index 3214992..9eb8a13 100644
+--- a/hw/audio/intel-hda.c
++++ b/hw/audio/intel-hda.c
+@@ -1250,8 +1250,13 @@ static void intel_hda_class_init_ich9(ObjectClass *klass, void *data)
+     DeviceClass *dc = DEVICE_CLASS(klass);
+     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
+ 
+-    k->device_id = 0x293e;
+-    k->revision = 3;
++    /* TabPro S experiment: present as Sunrise Point-LP HD Audio (8086:9d70), subsystem 144d:c135 */
++    k->device_id = getenv("HDA_SPT") ? 0x9d70 : 0x293e;
++    k->revision = getenv("HDA_SPT") ? 0x21 : 3;
++    if (getenv("HDA_SPT")) {
++        k->subsystem_vendor_id = 0x144d;
++        k->subsystem_id = 0xc135;
++    }
+     set_bit(DEVICE_CATEGORY_SOUND, dc->categories);
+     dc->desc = "Intel HD Audio Controller (ich9)";
+ }
+diff --git a/hw/audio/meson.build b/hw/audio/meson.build
+index 2990974..4f78b4e 100644
+--- a/hw/audio/meson.build
++++ b/hw/audio/meson.build
+@@ -6,7 +6,7 @@ system_ss.add(when: 'CONFIG_CS4231', if_true: files('cs4231.c'))
+ system_ss.add(when: 'CONFIG_CS4231A', if_true: files('cs4231a.c'))
+ system_ss.add(when: 'CONFIG_ES1370', if_true: files('es1370.c'))
+ system_ss.add(when: 'CONFIG_GUS', if_true: files('gus.c', 'gusemu_hal.c', 'gusemu_mixer.c'))
+-system_ss.add(when: 'CONFIG_HDA', if_true: files('intel-hda.c', 'hda-codec.c'))
++system_ss.add(when: 'CONFIG_HDA', if_true: files('intel-hda.c', 'hda-codec.c', 'hda-forward.c'))
+ system_ss.add(when: 'CONFIG_MARVELL_88W8618', if_true: files('marvell_88w8618.c'))
+ system_ss.add(when: 'CONFIG_PCSPK', if_true: files('pcspk.c'))
+ system_ss.add(when: 'CONFIG_PL041', if_true: files('pl041.c', 'lm4549.c'))

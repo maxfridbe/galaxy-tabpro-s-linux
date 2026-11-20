@@ -33,8 +33,9 @@ This has been the state since the tablet came out
 ```
 * The speakers are driven by **two Maxim MAX98925 smart amplifiers**. They are *digital-input*
   (I2S) amps, sitting behind the ALC298's internal **coefficient-register bridge**, at 7-bit addresses
-  **0x31** (left) and **0x34** (right). They are identified by their revision register `0xFF = 0x80`
-  and by register defaults matching the Linux `max98925` driver's table exactly.
+  **0x31** (left) and **0x34** (right), identified by their revision register `0xFF = 0x80`. Their
+  register map is close to, but not the same as, the Linux `max98925` driver's (0x17, 0x1C–0x1E,
+  0x25 and 0x33 don't exist here; 0x39 has an extra bit).
 * Nothing in ACPI describes them; on Windows the Realtek driver (`RTKVHD64.sys`) handles everything.
 
 ### Why the existing kernel quirks don't work
@@ -43,20 +44,31 @@ amps at **0x38–0x3d** using bridge command **`0xb011`** (16-bit register addre
 amps are at 0x31/0x34 and use **8-bit registers** (`0xb010` write / `0xb018` read). They never reach them.
 
 ### Why the speakers are silent
-1. The MAX98925s come out of reset already configured by the firmware (I2S format, clocks, gain,
-   boost + speaker blocks enabled) **but `GLOBAL_ENABLE` (reg 0x38) is 0** — nothing turns them on.
-2. The ALC298's internal block at bridge address **0x1b** (the I2S source for the amps) has to be put
-   in its playback power state; Linux never does that.
+Nothing on Linux programs the MAX98925s. Windows' Realtek driver writes a full register table to
+both amps when it starts (DAI clock and TDM format, slot selection, V/I-sense outputs, filters,
+speaker mode, ALC, boost limiter) and sets `GLOBAL_ENABLE` (reg 0x38). The amps keep that table
+until they lose power, so after a Windows boot they *look* configured and enabling reg 0x38 alone
+seemed enough. **A flat battery wipes them** (it happened on 2026-11-19), after which only the full
+table brings sound back.
+
+How the table was found: the Windows driver was run in a QEMU VM whose HD Audio codec forwards
+every verb to the real ALC298 on the tablet (see [`re/vm-verb-forward/`](../re/vm-verb-forward/)
+and [06](06-reverse-engineering.md)). The driver only creates its Samsung amp object when the
+controller reports Intel's Sunrise Point ID (8086:9D70), so the VM's controller has to pretend to
+be one. The complete start-up sequence it wrote is in
+[`re/data/windows-driver-start.txt`](../re/data/windows-driver-start.txt).
 
 ## The fix (`audio/w700-speakers`)
 A ~100-line Python script, no dependencies, run as root at boot and after resume:
 
 1. Checks it is on this exact codec (vendor `10ec0298`, subsystem `144dc135`) and that a MAX98925
    answers at 0x31 — otherwise it does nothing.
-2. Replays the Windows playback power-up of device `0x1b` (28 register writes extracted from
-   `RTKVHD64.sys` function `0x39ee78` by emulation — see [06](06-reverse-engineering.md)).
-3. For each amp: clears latched IRQ flags, sets **reg 0x2D** = channel select (left/right I2S slot)
-   + speaker gain, sets **reg 0x38 = 0x80** (GLOBAL_ENABLE).
+2. For each amp: disables it (reg 0x38 = 0), writes Windows' register table, clears latched IRQ
+   flags, sets **reg 0x2D** = channel select (left/right I2S slot) + speaker gain, and enables it
+   (**reg 0x38 = 0x80**).
+
+Earlier versions also replayed a power-up of the codec's internal block at bridge address 0x1b.
+Windows keeps that block powered down during speaker playback; it isn't needed for the speakers.
 
 It talks to the codec through the HDA hwdep device (`/dev/snd/hwC0D0`, `HDA_IOCTL_VERB_WRITE`) using
 the Realtek coef registers on node 0x20:
@@ -70,9 +82,10 @@ the Realtek coef registers on node 0x20:
 | `0x26` | command / status (bit 14 = busy). Write cmds `0xb010` 8/8-bit, `0xb012` 8-bit reg/16-bit data, `0xb013` 16/16, `0xb033` 32-bit reg; reads are the same `| 0x08` (`0xb018`, `0xb01a`, `0xb01b`, `0xb03b`) |
 | `0x28` | read data |
 
-### Codec power saving must be off
-If the codec runtime-suspends, the 0x1b block loses its configuration and the speakers go silent
-again. `install.sh` therefore sets `snd_hda_intel power_save=0 power_save_controller=N`
+### Codec power saving is off
+Earlier versions needed this because the 0x1b block lost its configuration on codec suspend; it is
+kept for now (the speaker script still sets it) until suspend behaviour is re-tested with the new
+amp table. `install.sh` therefore sets `snd_hda_intel power_save=0 power_save_controller=N`
 (`/etc/modprobe.d/w700-audio.conf`) and overrides `tuned`'s `balanced`/`powersave` profiles, which
 otherwise set `[audio] timeout=10` (`/etc/tuned/profiles/*/tuned.conf`). Cost: a little battery.
 
@@ -82,7 +95,7 @@ maximum is 31. **Windows protects these speakers with Realtek's speaker-protecti
 none** — raise carefully. Apply with `sudo /usr/local/sbin/w700-speakers` (or reboot).
 
 ### Stereo
-Register 0x2D bits 6:5 select the I2S input: the firmware leaves both amps on *(L+R)/2 mono*. The
+Register 0x2D bits 6:5 select the I2S input: Windows uses `0x79` (*(L+R)/2 mono*, gain 25) on both. The
 script sets 0x31 → left slot, 0x34 → right slot (verified by ear with a left/right test clip).
 
 ## Verifying / debugging
