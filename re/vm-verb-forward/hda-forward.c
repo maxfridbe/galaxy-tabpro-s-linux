@@ -6,7 +6,7 @@
  * returns the real response. Used to let a Windows guest's codec driver initialise a physical
  * codec so the sequence can be recorded.
  *
- *   -device intel-hda -device hda-forward,host=100.84.196.68,port=7171
+ *   -device intel-hda -device hda-forward,host=127.0.0.1,port=7171
  *
  * Wire format (little endian): request {u32 nid, u32 data(20 bit)}, reply {u32 response}.
  *
