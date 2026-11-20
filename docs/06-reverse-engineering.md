@@ -37,8 +37,16 @@ Python deps: `capstone pefile unicorn` (`python -m venv v && v/bin/pip install c
 6. **Bus scan** (read-only) of all bridge addresses → devices at **0x31** and **0x34** (8-bit regs,
    0x00–0x3E, `0xFF=0x80`), which match the **MAX98925** register map/defaults in Linux's
    `sound/soc/codecs/max98925.{c,h}` (removed upstream in later kernels; fetch from v4.19).
-7. Their state: configured by firmware, `GLOBAL_ENABLE` (0x38) = 0. Setting 0x38=0x80 alone: silent;
-   after replaying the 0x1b power-up: **sound**.
+7. Their state looked configured with `GLOBAL_ENABLE` (0x38) = 0; enabling them (plus a 0x1b
+   power-up) gave sound. In fact Windows had configured the amps before Linux was installed.
+8. **2026-11-19, after a flat battery:** silent again. Static analysis and emulation found the
+   Samsung amp class (pool tag `'Sams'`, constructor `0x38d2ac`, per-model branch for subsystem
+   `0xc135` at `0x38ea6c`) but not the missing writes. The full Windows driver was then run in a
+   QEMU VM whose codec forwards every verb to the real chip ([`re/vm-verb-forward/`](../re/vm-verb-forward/)).
+   The amp class is only created when the HD Audio controller is 8086:9D70 (checked in
+   `0x29a938`), so the VM controller presents that ID. The captured start-up sequence
+   ([`re/data/windows-driver-start.txt`](../re/data/windows-driver-start.txt)) contains the full
+   MAX98925 register table, which is the fix. Method details: [13](13-methodology.md).
 
 ## Cameras
 

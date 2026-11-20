@@ -16,7 +16,8 @@ for the two things that have never worked on Linux on this tablet:
   Linux through a small PE loader (no Wine)
 
 All of these were reverse-engineered from the Windows drivers (without redistributing them) and verified on
-real hardware.
+real hardware. How: [docs/13-methodology.md](docs/13-methodology.md). For the speakers, the Windows
+audio driver was even run in a VM whose sound chip commands were forwarded to the tablet's real one.
 
 ## Status
 
@@ -30,7 +31,7 @@ real hardware.
 | Keyboard cover | ❓ untested on Linux | a USB keyboard works (needed once for Secure Boot key enrollment) |
 | Suspend (s2idle) / resume | ✅ works | power button wakes it |
 | Headphone jack | ✅ out of the box | |
-| **Internal speakers** (2× Maxim MAX98925) | ✅ **with [`audio/`](audio/)** | stereo, gain configurable |
+| **Internal speakers** (2× Maxim MAX98925) | ✅ **with [`audio/`](audio/)** | stereo, gain configurable; full amp setup recorded from the Windows driver, survives a flat battery |
 | Internal microphone (digital, on ALC298) | ✅ works | set input level ≤ 60 % (100 % clips) — see [docs/03](docs/03-microphone.md) |
 | **Rear camera** (Sony IMX241 5 MP + DW9806B focus) | ✅ **with [`camera/`](camera/)** | libcamera / PipeWire / GNOME Camera; no AF in apps yet |
 | **Front camera** (Sony IMX241 5 MP) | ✅ **with [`camera/`](camera/)** | |
@@ -97,6 +98,7 @@ GPS needs `BcmGnss.dll` + `BcmGnssConfig.xml` from your Windows driver in `/var/
 | [10 – Other distributions](docs/10-other-distros.md) | Fedora Workstation, Ubuntu, Arch: DKMS etc. |
 | [11 – RPM packages](docs/11-packages.md) | the signed dnf repo, CI, Secure Boot handling |
 | [12 – Screen brightness](docs/12-brightness.md) | why the slider did nothing, the Parade TCON unlock, profile generation |
+| [13 – Methodology](docs/13-methodology.md) | how everything was found and tested: static RE, emulation with live hardware, running the Windows driver in a VM against the real codec, loopback testing |
 | [GNSS / GPS](gnss/README.md) | BCM4752 driver, running Broadcom's engine natively, install, findings |
 
 ## Repository layout
@@ -114,7 +116,8 @@ camera/
   tools/        raw/NV12 frame → PNG converters used for verification
 installer/      Fedora netinstall-on-FAT USB stick: grub.cfg + Silverblue kickstart, linux-collect.sh
 windows-dump/   Rust tool: back up the Windows device tree / ACPI / registry / drivers
-re/             reverse-engineering tools (disassembly index, Unicorn emulators, HDA verb tool) and
+re/             reverse-engineering tools (disassembly index, Unicorn emulators, HDA verb tool,
+                vm-verb-forward: QEMU codec that forwards a Windows VM's verbs to the real chip) and
                 the extracted data (register tables, PMIC sequences, ACPI evaluation results)
 docs/           all the documentation
 ```
